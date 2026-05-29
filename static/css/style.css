@@ -1,0 +1,113 @@
+*
+{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body{
+    /* background: linear-gradient(to right, #0f172a, #2563eb); */
+    font-family: Arial, sans-serif;
+}
+
+.register-card{
+    width: 420px;
+    background: white;
+    border-radius: 20px;
+}
+
+.register-btn{
+    background: #2563eb;
+    color: white;
+    font-weight: bold;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.register-btn:hover{
+    background: #1d4ed8;
+    color: white;
+}
+
+.form-control,
+.form-select{
+    border-radius: 10px;
+    height: 50px;
+}
+
+.nav-item1{
+    list-style-type: none;
+}
+.nav-item1 a{
+    padding: 10px 20px;
+    background-color: #fff;
+    color: #1d4ed8;
+    border-radius: 10px;
+    font-weight: 700;
+
+}
+.nav-item1 a:hover{
+    color: #1d4ed8;
+    font-weight: 700;
+}
+.nav-item1 a{
+    padding: 10px 20px;
+    background-color: #fff;
+    color: #1d4ed8;
+    border-radius: 10px;
+    font-weight: 700;
+}
+.header-card{
+    background:#2563eb;
+    color:white;
+    border-radius:20px;
+    padding:25px;
+}
+
+        .stat-card{
+            border:none;
+            border-radius:20px;
+            text-align:center;
+            padding:20px;
+        }
+
+        .project-card{
+            border:none;
+            border-radius:20px;
+            transition:0.3s;
+        }
+
+        .project-card:hover{
+            transform:translateY(-6px);
+        }
+
+        .status-ongoing{
+            background:green;
+        }
+
+        .status-completed{
+            background:gray;
+        }
+
+
+@media (max-width: 768px) {
+
+    .attendance-select {
+        min-width: 90px;
+        font-size: 14px;
+        padding: 6px;
+    }
+
+    table {
+        min-width: 900px;
+    }
+
+    th, td {
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
