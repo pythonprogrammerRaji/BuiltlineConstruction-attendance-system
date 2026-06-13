@@ -20,23 +20,15 @@
 
         <!-- Buttons -->
         <div class="d-flex gap-2 mb-4">
-
-            <button class="btn btn-primary w-100"
-                onclick="showForm('admin')">
-                Admin
+            <button class="btn btn-primary w-100" onclick="showForm('admin')">Admin</button>
+            <button class="btn btn-success w-100"onclick="showForm('Site Engineer')">Site Engineer
             </button>
-
-            <button class="btn btn-success w-100"
-                onclick="showForm('engineer')">
-                Site Engineer
-            </button>
-
-            <button class="btn btn-dark w-100"
-                onclick="showForm('office')">
-                Office Staff
-            </button>
-
+            <button class="btn btn-dark w-100"onclick="showForm('office')">Office Staff</button>
         </div>
+
+        <p id="role-text" class="text-muted mt-2 mb-3" style="font-size:13px;">
+            Please select your role above
+        </p>
 
         <!-- Login Form -->
         <form method="POST" action="/login">
@@ -58,13 +50,25 @@
 
             <div class="mb-3">
                 <label>Password</label>
-
-                <input
+                <div class="d-flex">
+                    <input
                     type="password"
                     name="password"
+                    id="login-password"
                     class="form-control"
-                    required
-                >
+                    required>
+
+                    <button type="button"
+                        class="btn btn-outline-secondary"
+                        onclick="loginPassword()">
+                        <svg xmlns="http://www.w3.org/2000/svg" id="eye-icon" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                            <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/>
+                            <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/>
+                        </svg>
+                        <!-- <i class="bi bi-eye" id="eye-icon"></i> -->
+                    </button>
+                </div>
+                
             </div>
 
             <!-- Admin key hidden -->
@@ -72,12 +76,10 @@
                 id="adminKeyDiv">
 
                 <label>Admin Secret Key</label>
-
                 <input
                     type="text"
                     name="admin_key"
-                    class="form-control"
-                >
+                    class="form-control">
             </div>
 
             <button class="btn btn-primary w-100">
@@ -90,21 +92,49 @@
 
 </div>
 
+
 <script>
-function showForm(role){
+   function showForm(role, btn){
 
     document.getElementById("role").value = role;
 
-    let adminDiv =
-        document.getElementById("adminKeyDiv");
+    let adminDiv = document.getElementById("adminKeyDiv");
 
     if(role === "admin"){
         adminDiv.classList.remove("d-none");
     }else{
         adminDiv.classList.add("d-none");
     }
+
+    // show which role is selected as small text
+    const text = document.getElementById("role-text");
+    if(role === "admin"){
+        text.textContent = "Logging in as Admin";
+        text.style.color = "#dc3545";
+    }else if(role === "Site Engineer"){
+        text.textContent = "Logging in as Site Engineer";
+        text.style.color = "#0d6efd";
+    }else if(role === "office"){
+        text.textContent = "Logging in as Office Staff";
+        text.style.color = "#198754";
+    }
+}
+
+function loginPassword(){
+    let input = document.getElementById("login-password");
+    let icon = document.getElementById("eye-icon")
+
+    if(input.type === "password"){
+        input.type = "text";
+        icon.classList.remove("bi-eye")
+        icon.classList.add("bi-eye-slash")
+    }
+    else{
+        input.type = "password";
+        icon.classList.remove("bi-eye-slash")
+        icon.classList.add("bi-eye")
+    }
 }
 </script>
-
 </body>
 </html>

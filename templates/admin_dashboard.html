@@ -79,6 +79,10 @@
                         <li class="nav-item">
                          <a class="nav-link text-white" href="/engineer_page">Projects</a>
                         </li>
+                        
+                        <li class="nav-item">
+                             <a href="/all-profiles" class="nav-link text-white">Profiles</a>
+                        </li>
 
                         <li class="nav-item">
                             <a class="nav-link text-white" href="/logout">Logout</a>
@@ -91,11 +95,11 @@
         </nav>
 
         <!-- Header -->
-        <div class="header-card  mt-2 d-flex justify-content-between align-items-center px-6">
-            <div class="">
+        <div class="header-card  mt-2 d-flex justify-content-between align-items-center px-6 row">
+            <div class="col-6">
                 <a href="/restart-attendance" class="btn btn-danger p-3 fw-bold">Weekly Attendance Reset</a>
             </div>
-            <div class="">
+            <div class="col-6 d-flex align-item-end justify-content-end">
                 <button class="btn btn-light fw-bold bg-primary text-white p-3" onclick="toggleForm()">+ Add Project</button>
             </div>
         </div>
@@ -152,48 +156,44 @@
             <h2 class="text-center">Projects</h2>
             <!-- Project Cards -->
             <div class="row px-4">
-
                 {% for project in projects %}
-
                 <div class="col-md-4 mb-4">
-
                     <div class="card shadow p-4 project-card">
-
-                        <h4>
-                            {{ project.project_name }}
-                        </h4>
-
+                        <h4>{{ project.project_name }}</h4>
                         <p>
-
-                            <strong>
-                                Engineer:
-                            </strong>
-
-                            {{ project.assigned_engineer }}
-
+                            <strong>Engineer: </strong>{{ project.assigned_engineer }}
                         </p>
-
-                        <p>
-
-                            <strong>Status:</strong>
-
+                        <!-- <p><strong>Status:</strong>
                             {% if project.status =="Ongoing" %}
-
                             <span class="badge bg-success">Ongoing</span>
-
                             {% else %}
-
                             <span class="badge bg-secondary">Completed</span>
-
                             {% endif %}
-                        </p>
+                        </p> -->
 
+                        <form method="POST" action="/change-project-status" class="mt-2 mb-3">
+                            <input type="hidden" name="project_name"
+                                    value="{{ project.project_name }}">
+                            <div class="d-flex gap-2 align-items-center">
+                                <select name="status" class="form-select form-select-sm">
+                                <option value="Ongoing"
+                                    {% if project.status == "Ongoing" %}selected{% endif %}>
+                                    Ongoing
+                                </option>
+                                <option value="Completed"
+                                    {% if project.status == "Completed" %}selected{% endif %}>
+                                    Completed
+                                </option>
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                Save
+                                </button>
+                            </div>
+                        </form>
                         <a href="/project/{{project.project_name}}" class="btn btn-primary w-100">
-                                Back to Project <span class="text-blod">{{ project.project_name }}</span>
-                            </a>
-
+                            Back to Project <span class="text-blod">{{ project.project_name }}</span>
+                        </a>
                     </div>
-
                 </div>
 
                 {% endfor %}
@@ -207,189 +207,170 @@
             <div class="row">
                 {% for item in attendance %}
                 <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <div class="card shadow h-100">
+                        <img src="{{item.image_url}}" class="card-img-top" style="height:220px;object-fit:cover;" loading="lazy">
+                        <div class="card-body w-100">
 
-                <div class="card shadow h-100">
+                            <h5>{{item.worker_name}}</h5>
 
-                <img src="{{item.image_url}}" class="card-img-top" style="height:220px;object-fit:cover;">
+                            <p><strong>Project:</strong> {{item.project_name}}</p>
 
-                <div class="card-body w-100">
+                            <p><strong>Type:</strong> {{item.type}}</p>
 
-                <h5>{{item.worker_name}}</h5>
+                            <p><strong>Date:</strong> {{item.date}}</p>
 
-                <p><strong>Project:</strong> {{item.project_name}}</p>
+                            <p><strong>Time:</strong> {{item.time}}</p>
 
-                <p><strong>Type:</strong> {{item.type}}</p>
+                            <p><strong>Location:</strong> {{item.location}}</p>
 
-                <p><strong>Date:</strong> {{item.date}}</p>
-
-                <p><strong>Time:</strong> {{item.time}}</p>
-
-                <p><strong>Location:</strong> {{item.location}}</p>
-
+                        </div>
+                    </div>
                 </div>
-
-                </div>
-
-                </div>
-
                 {% endfor %}
-
             </div>
         </section>
 
+        <!-- Task  form -->
         <section class="card p-4 shadow m-4 px-4">
-
             <h4 class="mb-3 text-center">Assign Task</h4>
-
-            <form action="/assign-task" method="POST" onsubmit="showAlert()">
-                <div class="mb-3">
-                        <label class="form-label">Select Site Engineer</label>
-                        <select name="assigned_engineer" class="form-select" required>
-                            <option value="">Select Engineer</option>
-                            {% for project in projects %}
-                                <option value="{{project.assigned_engineer}}">
-                                {{project.assigned_engineer}}
-                            </option>
-                            {% endfor %}
-                        </select>
+            <form action="/assign-task" method="POST">
+                    <div class="mb-3">
+                    <select name="assigned_engineer" class="form-select" required>
+                        <option value="">Select Engineer</option>
+                        {% for project in projects %}
+                        <option value="{{ project.assigned_engineer }}">
+                            {{ project.assigned_engineer }}
+                        </option>
+                        {% endfor %}
+                    </select>
                     </div>
 
-                <div class="mb-3">
-
-                <label class="form-label">Project</label>
-
+                    <div class="mb-3">
                     <select name="project_name" class="form-select" required>
-
                         <option value="">Select Project</option>
-                            {% for project in projects %}
-                            <option value="{{project.project_name}}">
-                                {{project.project_name}}
-                            </option>
-                            {% endfor %}
+                        {% for project in projects %}
+                        <option value="{{ project.project_name }}">
+                            {{ project.project_name }}
+                        </option>
+                        {% endfor %}
                     </select>
+                    </div>
 
-                </div>
+                    <div class="mb-3">
+                    <input type="text" name="task_name" class="form-control"
+                            placeholder="task1, task2, task3, task4, task5" required>
+                    <small class="text-muted" style="font-size:11px;">
+                        Separate each task with a comma
+                    </small>
+                    </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Task Name</label>
-                    <input type="text" name="task_name" class="form-control" placeholder="Enter Task" required>
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100">Assign Task</button>
-
+                    <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100"
+                            onclick="showAssignAlert(event, this.form)">
+                        Assign Tasks
+                    </button>
+                    </div>
             </form>
-
         </section>
 
-        <!-- <section class="container-fluid">
-            <div class="row d-flex gap-2">
-                {% for task in tasks %}     
-                    <div class="col-lg-3 col-md-6 col-sm-12 mb-4" style="width: 23%;">
-                        <div class="card p-3 shadow h-100">
-                            <h4>{{task.assigned_engineer}}</h4>
-                            <p><strong>Project:</strong>{{task.project_name}}</p>
-                            <p><strong>Task:</strong>{{task.task_name}}</p>
-                            <div class="progress mb-3">
-                                {% if task.is_completed %}
-                                    <div class="progress-bar bg-success" style="width:100%;"></div>
-                                {% else %}
-                                    <div class="progress-bar bg-success" style="width:0%;"></div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <input type="checkbox" {% if task.is_completed %} checked {% endif %}>Completed</div>
-                        {% endfor %}
-            </div>
-                
-        </section> -->
-
+        <!-- assigned task -->
         <section class="container-fluid p-4">
             <div class="row">
+                {% for project in projects %}
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                        <div class="card p-3 shadow h-100">
+                        <h4>{{project.assigned_engineer}}</h4>
+                        <p><strong>Project:</strong>{{project.project_name}}</p>
+                        {% for task in tasks %}
+                            {% if task.assigned_engineer==project.assigned_engineer %}
+                            <div class="form-check mb-2">
 
-            {% for project in projects %}
+                            <input
+                            class="form-check-input"
+                            type="checkbox"
 
-            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                            {% if task.is_completed %}
+                            checked
+                            {% endif %}
 
-            <div class="card p-3 shadow h-100">
+                            disabled>
 
-            <h4>
-            {{project.assigned_engineer}}
-            </h4>
+                            <label class="form-check-label">
 
-            <p>
-            <strong>Project:</strong>
-            {{project.project_name}}
-            </p>
+                            {{task.task_name}}
 
-            {% for task in tasks %}
+                            </label>
 
-            {% if task.assigned_engineer==project.assigned_engineer %}
+                            </div>
+                            {% endif %}
 
-            <div class="form-check mb-2">
+                        {% endfor %}
 
-            <input
-            class="form-check-input"
-            type="checkbox"
+                        <div class="progress mt-3">
 
-            {% if task.is_completed %}
-            checked
-            {% endif %}
+                        {% set completed=namespace(count=0) %}
+                        {% set total=namespace(count=0) %}
 
-            disabled>
+                        {% for task in tasks %}
 
-            <label class="form-check-label">
+                        {% if task.assigned_engineer==project.assigned_engineer %}
 
-            {{task.task_name}}
+                        {% set total.count=total.count+1 %}
 
-            </label>
+                        {% if task.is_completed %}
+                        {% set completed.count=completed.count+1 %}
+                        {% endif %}
 
-            </div>
+                        {% endif %}
 
-            {% endif %}
+                        {% endfor %}
 
-            {% endfor %}
+                        <div class="progress-bar bg-success"style="width:{{(completed.count*20)}}%;">
 
-            <div class="progress mt-3">
+                        {{completed.count*20}}%
 
-            {% set completed=namespace(count=0) %}
-            {% set total=namespace(count=0) %}
+                        </div>
 
-            {% for task in tasks %}
+                        </div>
 
-            {% if task.assigned_engineer==project.assigned_engineer %}
-
-            {% set total.count=total.count+1 %}
-
-            {% if task.is_completed %}
-            {% set completed.count=completed.count+1 %}
-            {% endif %}
-
-            {% endif %}
-
-            {% endfor %}
-
-            <div class="progress-bar bg-success"style="width:{{(completed.count*20)}}%;">
-
-            {{completed.count*20}}%
-
-            </div>
-
-            </div>
-
-            <div class="d-flex aligin-item-end justify-content-end"><a href="/delete-engineer-task/{{project.assigned_engineer}}/{{project.project_name}}"
-            class="btn btn-danger w-30 mt-3 ">Delete </a></div>
-            </div>
-
-            </div>
-
-            {% endfor %}
-
+                        <div class="d-flex aligin-item-end justify-content-end"><a href="/delete-engineer-task/{{project.assigned_engineer}}/{{project.project_name}}"
+                        class="btn btn-danger w-30 mt-3 ">Delete </a></div>
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
         </section>
 
     </section>
 
 <script src="{{url_for('static',filename='js/main.js')}}"></script>
+
+<script>
+    function showAssignAlert(event, form) {
+  event.preventDefault();
+
+  const engineer = form.assigned_engineer.value;
+  const tasks    = form.task_name.value;
+
+  if (!engineer || !tasks) {
+    alert("Please fill all fields.");
+    return;
+  }
+
+  // split by comma to count tasks
+  const taskList = tasks.split(",")
+                        .map(t => t.trim())
+                        .filter(t => t !== "");
+
+  const msg = "Assigned " + taskList.length + " tasks to " + engineer + ":\n\n"
+              + taskList.map((t, i) => (i+1) + ". " + t).join("\n");
+
+  alert(msg);
+
+  // now submit the form
+  form.submit();
+}
+</script>
    
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

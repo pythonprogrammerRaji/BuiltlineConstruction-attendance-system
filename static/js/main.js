@@ -126,8 +126,6 @@ function showSection(section){
 
 }
 
-
-
     function calculateTotal(select){
         let row=select.closest("tr");
         let selects=row.querySelectorAll(".attendance-select");
@@ -309,48 +307,83 @@ attendanceType+" Successful";
 
 
 
-const taskCheckboxes=
-document.querySelectorAll(".taskCheckbox");
+// const taskCheckboxes=
+// document.querySelectorAll(".taskCheckbox");
 
-taskCheckboxes.forEach(box=>{
+// taskCheckboxes.forEach(box=>{
 
-box.addEventListener("change",function(){
+// box.addEventListener("change",function(){
 
-fetch("/update-task",{
+// fetch("/update-task",{
 
-method:"POST",
+// method:"POST",
 
-headers:{
-"Content-Type":"application/json"
-},
+// headers:{
+// "Content-Type":"application/json"
+// },
 
-body:JSON.stringify({
+// body:JSON.stringify({
 
-task_id:this.dataset.id,
-is_completed:this.checked
+// task_id:this.dataset.id,
+// is_completed:this.checked
 
-})
+// })
 
-})
+// })
 
-.then(response=>response.json())
+// .then(response=>response.json())
 
-.then(data=>{
+// .then(data=>{
 
-document.getElementById(
-"taskProgressBar"
-).style.width=
-data.progress+"%";
+// document.getElementById(
+// "taskProgressBar"
+// ).style.width=
+// data.progress+"%";
 
-document.getElementById(
-"progressText"
-).innerText=
-data.progress+"%";
+// document.getElementById(
+// "progressText"
+// ).innerText=
+// data.progress+"%";
+
+// });
+
+// });
+
+// });
+
+const taskCheckboxes = document.querySelectorAll(".taskCheckbox");
+
+taskCheckboxes.forEach(box => {
+
+  box.addEventListener("change", function() {
+
+    const taskId      = this.dataset.id;
+    const isCompleted = this.checked;
+    // get engineer name from checkbox data attribute
+    // so we update only that engineer's progress bar
+    const engineer    = this.dataset.engineer;
+
+    fetch("/update-task", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        task_id:      taskId,
+        is_completed: isCompleted
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+
+      // update progress bar for this specific engineer card
+      // not all cards — only the one that changed
+      const bar   = document.getElementById("taskProgressBar-" + engineer);
+      const text  = document.getElementById("progressText-"    + engineer);
+
+      if (bar)  bar.style.width  = data.progress + "%";
+      if (text) text.innerText   = data.completed + " of " + data.total + " tasks — " + data.progress + "%";
+
+    });
+
+  });
 
 });
-
-});
-
-});
-
-
