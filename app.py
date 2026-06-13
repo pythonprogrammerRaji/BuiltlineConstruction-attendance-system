@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, jsonify, session
 from datetime import datetime, timedelta, date
 from openpyxl import Workbook
 import time
+import os
+
 from config import (
     supabase,
     SECRET_KEY,
@@ -646,7 +648,6 @@ def delete_engineer_task(engineer,project_name):
 
 # Attendance reset
 from datetime import datetime
-import os
 @app.route("/restart-attendance")
 def restart_attendance():
 
@@ -1074,5 +1075,5 @@ def logout():
     return redirect("/login")
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    port = int(os.environ.get("PORT", 8000))
+    app.run(host="0.0.0.0", port=port, debug=False)
