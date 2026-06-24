@@ -12,7 +12,14 @@ from config import (
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
-    
+
+@app.after_request
+def add_no_cache(response):
+    # tell browser never to cache files
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"]        = "no-cache"
+    response.headers["Expires"]       = "0"
+    return response
 
 @app.route("/")
 def home():
@@ -27,9 +34,7 @@ def register():
         email = request.form.get("email")
         password = request.form.get("password")
         role = request.form.get("role")
-
         try:
-
             # insert user in database
             supabase.table("users").insert({
                 "full_name": full_name,
@@ -62,24 +67,6 @@ def login():
             
             if user.data:
                 db_role = user.data[0]["role"]
-
-                # if role == "admin":
-                #     if(db_role == "Admin" and admin_key ==  ADMIN_SECRET):
-                #         return redirect("/admin-dashboard")
-                
-                #     return "Invalid Admin Key"
-
-
-                # elif role == "engineer":
-                #     if db_role == "Site Engineer":
-                #         return redirect("/engineer_page")
-                    
-                    
-                # elif role == "office":
-                #     if db_role == "Office Staff":
-                #         session["worker_name"]=user.data[0]["full_name"]
-                #         session["engineer_name"]  = user.data[0]["full_name"]
-                #         return redirect("/office-dashboard")
                 if role == "admin":
                     if db_role == "Admin" and admin_key == ADMIN_SECRET:
                         session["worker_name"] = user.data[0]["full_name"]
@@ -213,12 +200,6 @@ def history():
         history    = history.data
     )
 
-# Photos showing here
-# @app.route("/photos")
-# def photos():
-#     photos=supabase.table("attendance_checkin").select("*").execute()
-#     return render_template("photos.html",photos=photos.data)
-
 @app.route("/photos")
 def photos():
     # delete photos older than 15 days first
@@ -280,71 +261,6 @@ def photos():
         "photos.html",
         photos = recent_photos
     )
-
-# Engineer page redirect 
-# @app.route("/engineer_page")
-# def engineer_page():
-
-#     projects = supabase.table("project_assignments").select("*").eq("status", "Ongoing").eq("is_deleted", False).execute()
-# # 
-#     return render_template("engineer_home.html", projects=projects.data)
-    
-# @app.route("/engineer_page")
-# def engineer_page():
-
-#     # check if anyone is logged in
-#     # admin can also view this page
-#     worker_name = session.get("worker_name")
-
-#     if not worker_name:
-#         return redirect("/login")
-
-#     # check role from session
-#     role = session.get("role")
-
-#     # if admin — show all projects
-#     if role == "admin":
-#         all_projects = supabase.table("project_assignments")\
-#             .select("*")\
-#             .eq("is_deleted", False)\
-#             .execute()
-
-#         ongoing_count   = len([p for p in all_projects.data if p["status"] == "Ongoing"])
-#         completed_count = len([p for p in all_projects.data if p["status"] == "Completed"])
-
-#         return render_template(
-#             "engineer_home.html",
-#             projects        = all_projects.data,
-#             total_projects  = len(all_projects.data),
-#             ongoing_count   = ongoing_count,
-#             completed_count = completed_count,
-#             engineer_name   = "Admin View"
-#         )
-
-#     # if engineer — show only their projects
-#     all_projects = supabase.table("project_assignments")\
-#         .select("*")\
-#         .eq("is_deleted", False)\
-#         .execute()
-
-#     ongoing_count   = len([p for p in all_projects.data if p["status"] == "Ongoing"])
-#     completed_count = len([p for p in all_projects.data if p["status"] == "Completed"])
-
-#     my_projects = supabase.table("project_assignments")\
-#         .select("*")\
-#         .eq("assigned_engineer", worker_name)\
-#         .eq("is_deleted", False)\
-#         .execute()
-
-#     return render_template(
-#         "engineer_home.html",
-#         projects        = my_projects.data,
-#         total_projects  = len(all_projects.data),
-#         ongoing_count   = ongoing_count,
-#         completed_count = completed_count,
-#         engineer_name   = worker_name
-#     )
-
 
 @app.route("/engineer_page")
 def engineer_page():
@@ -500,6 +416,61 @@ def delete_worker(worker_id,project_name):
 
     return redirect(f"/project/{project_name}")
 
+# Workers OT
+@app.route("/add-overtime", methods=["POST"])
+def add_overtime():
+
+    worker_id    = request.form.get("worker_id")
+    worker_name  = request.form.get("worker_name")
+    project_name = request.form.get("project_name")
+    date         = request.form.get("date")
+    start_time   = request.form.get("start_time")
+    end_time     = request.form.get("end_time")
+    ot_hours     = request.form.get("ot_hours")
+
+    print("WORKER ID:",    worker_id)
+    print("WORKER NAME:",  worker_name)
+    print("PROJECT:",      project_name)
+    print("DATE:",         date)
+    print("START:",        start_time)
+    print("END:",          end_time)
+    print("OT HOURS:",     ot_hours)
+
+    try:
+        result = supabase.table("overtime").insert({
+            "worker_id":    worker_id,
+            "worker_name":  worker_name,
+            "project_name": project_name,
+            "date":         date,
+            "start_time":   start_time,
+            "end_time":     end_time,
+            "ot_hours":     ot_hours
+        }).execute()
+
+        print("INSERT RESULT:", result.data)
+
+        return jsonify({"success": True})
+
+    except Exception as e:
+        print("ERROR SAVING OT:", str(e))
+        return jsonify({"success": False, "error": str(e)})
+
+
+# this route is called when site engineer clicks "OT Details" button
+# it returns all OT records for that specific worker
+@app.route("/get-overtime/<worker_id>")
+def get_overtime(worker_id):
+
+    # fetch all OT rows for this worker, newest first
+    records = supabase.table("overtime")\
+        .select("*")\
+        .eq("worker_id", worker_id)\
+        .order("date", desc=True)\
+        .execute()
+
+    # send back as JSON so JS can display it in the popup
+    return jsonify({"records": records.data})
+
 import time
 
 @app.route("/save-attendance-checkin",methods=["POST"])
@@ -593,41 +564,101 @@ def assign_task():
 
     return redirect("/admin-dashboard")
 
+# @app.route("/update-task", methods=["POST"])
+# def update_task():
+
+#     data         = request.get_json()
+#     task_id      = data.get("task_id")
+#     is_completed = data.get("is_completed")
+
+#     # update this task status
+#     supabase.table("task").update({
+#         "is_completed": is_completed
+#     }).eq("id", task_id).execute()
+
+#     # get the project name of this task
+#     current_task = supabase.table("task")\
+#         .select("*")\
+#         .eq("id", task_id)\
+#         .execute()
+
+#     project_name      = current_task.data[0]["project_name"]
+#     assigned_engineer = current_task.data[0]["assigned_engineer"]
+
+#     # get all tasks for this engineer in this project
+#     all_tasks = supabase.table("task")\
+#         .select("*")\
+#         .eq("project_name", project_name)\
+#         .eq("assigned_engineer", assigned_engineer)\
+#         .execute()
+
+#     total     = len(all_tasks.data)
+#     completed = len([t for t in all_tasks.data if t["is_completed"]])
+
+#     if total > 0:
+#         progress = round((completed / total) * 100)
+#     else:
+#         progress = 0
+
+#     return jsonify({
+#         "progress":  progress,
+#         "completed": completed,
+#         "total":     total
+#     })
+
 @app.route("/update-task", methods=["POST"])
 def update_task():
 
     data         = request.get_json()
     task_id      = data.get("task_id")
     is_completed = data.get("is_completed")
+    worker_name  = session.get("worker_name")
 
-    # update this task status
-    supabase.table("task").update({
-        "is_completed": is_completed
-    }).eq("id", task_id).execute()
-
-    # get the project name of this task
-    current_task = supabase.table("task")\
-        .select("*")\
+    # update task status
+    supabase.table("task")\
+        .update({"is_completed": is_completed})\
         .eq("id", task_id)\
         .execute()
 
-    project_name      = current_task.data[0]["project_name"]
-    assigned_engineer = current_task.data[0]["assigned_engineer"]
+    # get task details
+    task = supabase.table("task")\
+    .select("*").eq("id", task_id).execute()
+    
+    task_data    = task.data[0]
+    task_name    = task_data["task_name"]
+    project_name = task_data["project_name"]
+    engineer     = task_data["assigned_engineer"]
 
-    # get all tasks for this engineer in this project
+    # calculate progress
     all_tasks = supabase.table("task")\
         .select("*")\
         .eq("project_name", project_name)\
-        .eq("assigned_engineer", assigned_engineer)\
+        .eq("assigned_engineer", engineer)\
+        .eq("is_deleted", False)\
         .execute()
 
     total     = len(all_tasks.data)
     completed = len([t for t in all_tasks.data if t["is_completed"]])
+    progress  = round((completed / total * 100)) if total > 0 else 0
 
-    if total > 0:
-        progress = round((completed / total) * 100)
+    if is_completed:
+    # only save notification when task is completed
+    # not for pending
+        supabase.table("notifications").insert({
+        "message":  f"{engineer} completed '{task_name}' in {project_name}",
+        "type":     "task_completed",
+        "for_role": "admin",
+        "is_read":  False
+    }).execute()
+
     else:
-        progress = 0
+        # engineer unticked a task
+        supabase.table("notifications").insert({
+            "message":  f"{engineer} marked '{task_name}' as pending in {project_name}",
+            "type":     "task_pending",
+            "for_role": "admin",
+            "is_read":  False
+        }).execute()
 
     return jsonify({
         "progress":  progress,
@@ -653,7 +684,7 @@ def restart_attendance():
 
     today = datetime.now().strftime("%A")
 
-    # Allow only Wednesday
+    # Allow only Monday
     if today != "Monday":
         return """
         <script>
@@ -680,7 +711,6 @@ def restart_attendance():
         history_folder,
         exist_ok=True
     )
-
     # Week date
     # week_name = datetime.now().strftime("%d-%m-%Y")
 
@@ -1065,6 +1095,90 @@ def edit_profile():
         .execute()
 
     return redirect("/profile")
+
+# notification
+@app.route("/get-notifications")
+def get_notifications():
+
+    role        = session.get("role")
+    worker_name = session.get("worker_name")
+
+    print("ROLE:", role)
+    print("WORKER NAME:", worker_name)
+
+    notifs = supabase.table("notifications")\
+        .select("*")\
+        .eq("for_role", "admin")\
+        .eq("is_read", False)\
+        .order("created_at", desc=True)\
+        .limit(10)\
+        .execute()
+
+    print("NOTIFICATIONS:", notifs.data)
+
+    return jsonify({"notifications": notifs.data})
+
+   
+
+
+# this route is called by engineer page JS
+# it counts how many tasks this engineer has not completed
+# returns the count as JSON so JS can show it on bell icon
+@app.route("/get-pending-reminders")
+def get_pending_reminders():
+
+    # get logged in engineer name from session
+    worker_name = session.get("worker_name")
+    role        = session.get("role")
+
+    if not worker_name:
+        # if not logged in return 0
+        return jsonify({"my_pending": 0})
+
+    if role == "admin":
+        # admin sees all engineers pending tasks
+        engineers = supabase.table("users")\
+            .select("*")\
+            .eq("role", "Site Engineer")\
+            .execute()
+
+        reminders = []
+        for eng in engineers.data:
+            # count pending tasks for each engineer
+            pending = supabase.table("task")\
+                .select("*")\
+                .eq("assigned_engineer", eng["full_name"])\
+                .eq("is_completed", False)\
+                .eq("is_deleted", False)\
+                .execute()
+
+            if pending.data:
+                reminders.append({
+                    "engineer": eng["full_name"],
+                    "count":    len(pending.data)
+                })
+
+        return jsonify({"reminders": reminders, "my_pending": 0})
+
+    else:
+        # engineer sees only their own pending tasks
+        # count tasks where is_completed is False
+        pending = supabase.table("task")\
+            .select("*")\
+            .eq("assigned_engineer", worker_name)\
+            .eq("is_completed", False)\
+            .eq("is_deleted", False)\
+            .execute()
+
+        print("PENDING TASKS:", len(pending.data))
+
+        # return count as JSON
+        # JS reads data.my_pending to show on bell badge
+        return jsonify({
+            "my_pending": len(pending.data),
+            "reminders":  []
+        })
+    
 
 # logout
 @app.route("/logout")

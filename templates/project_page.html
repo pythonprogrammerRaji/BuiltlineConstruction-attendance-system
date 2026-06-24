@@ -62,6 +62,36 @@
             display:none;
         }
 
+           
+        .ot-record-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .ot-record-date {
+            font-size: 13px;
+            font-weight: 600;
+            margin: 0;
+            color: #111;
+        }
+
+        .ot-record-time {
+            font-size: 12px;
+            color: #888;
+            margin: 0;
+        }
+
+        .ot-record-hours {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a56db;
+            margin: 0;
+        }
+       
+
     </style>
 
 </head>
@@ -244,8 +274,10 @@
 
                             </td>
                             <td class="total-days">0</td>
-                            <td>
+                            <td class="d-flex align-item-center gap-3">
                                 <a href="/delete-worker/{{worker.id}}/{{project_name}}" class="btn btn-danger btn-sm" onclick="return confirm('Delete Worker?')"><i class="bi bi-trash"></i></a>
+                                 <button type="button" class="btn btn-sm btn-warning" onclick="openOTPopup('{{ worker.id }}', '{{ worker.name }}', '{{ project_name }}')">OT</button>
+                                <button type="button" class="btn btn-sm btn-info" onclick="openOTDetails('{{ worker.id }}', '{{ worker.name }}')">OT Details</button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -324,6 +356,7 @@
                 </div>
                 <input type="file" id="selfieInput" accept="image/*" capture="user" style="display:none;">
                 <div id="attendancePreview" class="mt-3"></div></div></div>
+                
                 <div id="tasksSection" class="hidden">
 
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -364,6 +397,76 @@
                 </div>
             </div>
 
+<div class="modal fade" id="otModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Add Overtime</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- shows which worker this OT is for -->
+        <p class="fw-bold mb-3" id="ot-worker-label"></p>
+
+        <!-- hidden fields to carry worker info to backend -->
+        <input type="hidden" id="ot-worker-id">
+        <input type="hidden" id="ot-worker-name">
+        <input type="hidden" id="ot-project-name">
+
+        <div class="mb-3">
+          <label class="form-label">Date</label>
+          <input type="date" id="ot-date" class="form-control">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Start Time</label>
+          <!-- dropdown listing every 30 min slot for full day -->
+          <select id="ot-start-time" class="form-select"></select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">End Time</label>
+          <select id="ot-end-time" class="form-select"></select>
+        </div>
+
+        <!-- error message shown if time is inside office hours -->
+        <p id="ot-error" class="text-danger" style="display:none;"></p>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" onclick="saveOvertime()">Save</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="otDetailsModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title text-warning" id="ot-details-title">OT Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- JS fills this list with each OT record -->
+        <div id="ot-details-list"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+
+
 
 <script>
     function editSalary(workerId) {
@@ -379,6 +482,173 @@
   editBtn.classList.add("d-none");
   saveBtn.classList.remove("d-none");
 }
+</script>
+
+<script>
+
+// office working hours — used to validate OT time selection
+const OFFICE_START = "09:00";
+const OFFICE_END   = "18:20";  // 6:20 PM in 24 hour format
+
+
+// builds a dropdown with every 30 minute time slot for the whole day
+// example: 12:00 AM, 12:30 AM, 1:00 AM ... 11:30 PM
+function fillTimeOptions(selectId) {
+
+    const select = document.getElementById(selectId);
+    select.innerHTML = "";
+
+    // loop through 24 hours, 30 min steps = 48 slots
+    for (let i = 0; i < 48; i++) {
+
+        const hour   = Math.floor(i / 2);
+        const minute = (i % 2 === 0) ? "00" : "30";
+
+        // convert hour to 24hr format string like "09:00"
+        const value24 = String(hour).padStart(2, "0") + ":" + minute;
+
+        // convert to 12hr format for display like "9:00 AM"
+        const ampm    = hour >= 12 ? "PM" : "AM";
+        const hour12  = hour % 12 === 0 ? 12 : hour % 12;
+        const label   = hour12 + ":" + minute + " " + ampm;
+
+        const option = document.createElement("option");
+        option.value = value24;   // value sent to backend
+        option.text  = label;     // text shown to user
+        select.appendChild(option);
+    }
+}
+
+
+// opens the Add OT popup
+// fills hidden fields with worker info so saveOvertime() knows who it is for
+function openOTPopup(workerId, workerName, projectName) {
+
+    document.getElementById("ot-worker-id").value    = workerId;
+    document.getElementById("ot-worker-name").value  = workerName;
+    document.getElementById("ot-project-name").value = projectName;
+    document.getElementById("ot-worker-label").textContent = "Worker: " + workerName;
+
+    // default date to today
+    document.getElementById("ot-date").value = new Date().toISOString().slice(0, 10);
+
+    // fill both dropdowns with time slots
+    fillTimeOptions("ot-start-time");
+    fillTimeOptions("ot-end-time");
+
+    // hide any old error message
+    document.getElementById("ot-error").style.display = "none";
+
+    // show the bootstrap modal
+    const modal = new bootstrap.Modal(document.getElementById("otModal"));
+    modal.show();
+}
+
+
+// converts "HH:MM" string into total minutes from midnight
+// makes it easy to compare two times
+function timeToMinutes(timeStr) {
+    const [h, m] = timeStr.split(":").map(Number);
+    return h * 60 + m;
+}
+
+
+// checks if a given time falls inside office hours (9:00 AM to 6:20 PM)
+function isInsideOfficeHours(timeStr) {
+    const t     = timeToMinutes(timeStr);
+    const start = timeToMinutes(OFFICE_START);
+    const end   = timeToMinutes(OFFICE_END);
+    return t >= start && t <= end;
+}
+
+
+// called when site engineer clicks Save in the OT popup
+function saveOvertime() {
+
+    const startTime = document.getElementById("ot-start-time").value;
+    const endTime    = document.getElementById("ot-end-time").value;
+    const errorBox   = document.getElementById("ot-error");
+
+    // rule: OT must be OUTSIDE office hours (9:00 AM - 6:20 PM)
+    // if either start or end time falls inside office hours, block save
+    if (isInsideOfficeHours(startTime) || isInsideOfficeHours(endTime)) {
+        errorBox.textContent = "Please select time outside working hours (9:00 AM - 6:20 PM)";
+        errorBox.style.display = "block";
+        return;  // stop here — do not save
+    }
+
+    // calculate total OT hours from start and end time
+    let startMin = timeToMinutes(startTime);
+    let endMin   = timeToMinutes(endTime);
+
+    // handle case where OT crosses midnight (e.g. starts 10 PM ends 1 AM)
+    if (endMin < startMin) {
+        endMin += 24 * 60;
+    }
+
+    const otHours = ((endMin - startMin) / 60).toFixed(1);
+
+    // build form data to send to Flask
+    const formData = new FormData();
+    formData.append("worker_id",    document.getElementById("ot-worker-id").value);
+    formData.append("worker_name",  document.getElementById("ot-worker-name").value);
+    formData.append("project_name", document.getElementById("ot-project-name").value);
+    formData.append("date",         document.getElementById("ot-date").value);
+    formData.append("start_time",   startTime);
+    formData.append("end_time",     endTime);
+    formData.append("ot_hours",     otHours);
+
+    // send to Flask /add-overtime route
+    fetch("/add-overtime", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // close popup after saving
+            bootstrap.Modal.getInstance(document.getElementById("otModal")).hide();
+            alert("Overtime saved: " + otHours + " hours");
+        }
+    });
+}
+
+
+// opens OT Details popup — fetches and lists all past OT for that worker
+function openOTDetails(workerId, workerName) {
+
+    document.getElementById("modal-title").textContent = workerName + " - OT History";
+
+    // call Flask to get all OT records for this worker
+    fetch("/get-overtime/" + workerId)
+    .then(res => res.json())
+    .then(data => {
+
+        const list = document.getElementById("ot-details-list");
+        const records = data.records;
+
+        if (records.length === 0) {
+            list.innerHTML = "<p class='text-muted'>No OT recorded yet.</p>";
+        } else {
+            list.innerHTML = "";
+            records.forEach(r => {
+                const row = document.createElement("div");
+                row.classList.add("ot-record-row");
+                row.innerHTML = `
+                    <p class="ot-record-date text-danger">${r.date}</p>
+                    <p class="ot-record-time">${r.start_time} - ${r.end_time}</p>
+                    <p class="ot-record-hours">${r.ot_hours} hrs</p>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        // show the popup
+        const modal = new bootstrap.Modal(document.getElementById("otDetailsModal"));
+        modal.show();
+    });
+}
+
 </script>
 
 <script src="{{url_for('static',filename='js/main.js')}}"></script>

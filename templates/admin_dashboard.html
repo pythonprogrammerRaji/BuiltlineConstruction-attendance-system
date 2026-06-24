@@ -84,6 +84,70 @@
                              <a href="/all-profiles" class="nav-link text-white">Profiles</a>
                         </li>
 
+                        <!-- bell notification icon -->
+                         <li>
+                            <div class="position-relative d-inline-block me-2">
+                                <button class="btn btn-outline-light btn-sm"
+                                        onclick="toggleNotifDropdown()"
+                                        style="border-radius:50%;width:36px;height:36px;padding:0;">
+                                    <i class="bi bi-bell"></i>
+                                    <span id="notif-count"
+                                        class="position-absolute"
+                                        style="top:-4px;right:-4px;
+                                                background:#dc3545;
+                                                color:#fff;
+                                                border-radius:50%;
+                                                width:18px;height:18px;
+                                                font-size:10px;
+                                                display:none;
+                                                align-items:center;
+                                                justify-content:center;">
+                                    0
+                                    </span>
+                                </button>
+
+                            <!-- notification messages dropdown -->
+                                <div id="notif-dropdown"
+                                    style="display:none;
+                                            position:absolute;
+                                            right:0;top:45px;
+                                            width:340px;
+                                            background:#fff;
+                                            border-radius:12px;
+                                            box-shadow:0 8px 24px rgba(0,0,0,0.15);
+                                            z-index:9999;
+                                            max-height:400px;
+                                            overflow-y:auto;">
+
+                                    <div style="padding:12px 16px;
+                                                border-bottom:1px solid #f0f0f0;
+                                                display:flex;
+                                                justify-content:space-between;
+                                                align-items:center;
+                                                position:sticky;top:0;background:#fff;">
+                                    <p style="margin:0;font-weight:700;font-size:14px;color:#1a1a1a;">
+                                        <i class="bi bi-bell-fill text-primary"></i> Notifications
+                                    </p>
+                                    <button onclick="markAllRead()"
+                                            style="border:none;background:none;
+                                                    color:#1a56db;font-size:12px;
+                                                    cursor:pointer;font-weight:500;">
+                                        Clear all
+                                    </button>
+                                    </div>
+
+                                    <div id="notif-list" style="padding:8px 0;">
+                                    <p style="text-align:center;color:#aaa;
+                                                font-size:13px;padding:20px;">
+                                        No new notifications
+                                    </p>
+                                    </div>
+                                </div>
+                            </div>
+                         </li>
+                        
+
+
                         <li class="nav-item">
                             <a class="nav-link text-white" href="/logout">Logout</a>
                         </li>
@@ -163,13 +227,6 @@
                         <p>
                             <strong>Engineer: </strong>{{ project.assigned_engineer }}
                         </p>
-                        <!-- <p><strong>Status:</strong>
-                            {% if project.status =="Ongoing" %}
-                            <span class="badge bg-success">Ongoing</span>
-                            {% else %}
-                            <span class="badge bg-secondary">Completed</span>
-                            {% endif %}
-                        </p> -->
 
                         <form method="POST" action="/change-project-status" class="mt-2 mb-3">
                             <input type="hidden" name="project_name"
@@ -369,6 +426,83 @@
 
   // now submit the form
   form.submit();
+}
+</script>
+
+<!-- Notification -->
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+  loadNotifications();
+  setInterval(loadNotifications, 30000);
+});
+
+function loadNotifications() {
+  fetch("/get-notifications")
+  .then(res => res.json())
+  .then(data => {
+    const notifs = data.notifications;
+    const count  = notifs.length;
+    const badge  = document.getElementById("notif-count");
+
+    if (count > 0) {
+      badge.textContent    = count;
+      badge.style.display  = "flex";
+    } else {
+      badge.style.display  = "none";
+    }
+
+    const list = document.getElementById("notif-list");
+    if (count === 0) {
+      list.innerHTML = `<p style="text-align:center;color:#aaa;
+                                  font-size:13px;padding:20px;">
+                          No new notifications
+                        </p>`;
+      return;
+    }
+
+    list.innerHTML = "";
+    notifs.forEach(notif => {
+      const time = new Date(notif.created_at)
+                   .toLocaleString("en-IN", {
+                     day: "numeric", month: "short",
+                     hour: "2-digit", minute: "2-digit"
+                   });
+
+      const item = document.createElement("div");
+      item.style.cssText = `
+        padding:12px 16px;
+        border-bottom:1px solid #f5f5f5;
+        background:#f0fdf4;
+      `;
+
+      item.classList.add("notify-item")
+
+      item.innerHTML = `
+    <div style="display:flex;gap:10px;align-items:flex-start;">
+        <span style="font-size:18px;">✅</span>
+        <div>
+            <p class="notif-msg">${notif.message}</p>
+            <p class="notif-time">${time}</p>
+        </div>
+    </div>`;
+
+    list.appendChild(item);
+    });
+  });
+}
+
+function toggleNotifDropdown() {
+  const d = document.getElementById("notif-dropdown");
+  d.style.display = d.style.display === "none" ? "block" : "none";
+}
+
+function markAllRead() {
+  fetch("/mark-notifications-read", { method: "POST" })
+  .then(() => {
+    loadNotifications();
+    document.getElementById("notif-dropdown").style.display = "none";
+  });
 }
 </script>
    
