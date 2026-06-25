@@ -987,7 +987,7 @@ def download_file(file_name):
         as_attachment=True
     )
 
-#profile 
+#profile .
 # engineer sees their own profile
 @app.route("/profile")
 def profile():
