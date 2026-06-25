@@ -23,7 +23,7 @@
             <button class="btn btn-primary w-100" onclick="showForm('admin')">Admin</button>
             <button class="btn btn-success w-100"onclick="showForm('Site Engineer')">Site Engineer
             </button>
-            <button class="btn btn-dark w-100"onclick="showForm('office')">Office Staff</button>
+            <button class="btn btn-dark w-100"onclick="showForm('office')">Supervisor</button>
         </div>
 
         <p id="role-text" class="text-muted mt-2 mb-3" style="font-size:13px;">
@@ -115,7 +115,7 @@
         text.textContent = "Logging in as Site Engineer";
         text.style.color = "#0d6efd";
     }else if(role === "office"){
-        text.textContent = "Logging in as Office Staff";
+        text.textContent = "Logging in as Supervisor";
         text.style.color = "#198754";
     }
 }

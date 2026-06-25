@@ -307,50 +307,6 @@ attendanceType+" Successful";
 
 
 
-// const taskCheckboxes=
-// document.querySelectorAll(".taskCheckbox");
-
-// taskCheckboxes.forEach(box=>{
-
-// box.addEventListener("change",function(){
-
-// fetch("/update-task",{
-
-// method:"POST",
-
-// headers:{
-// "Content-Type":"application/json"
-// },
-
-// body:JSON.stringify({
-
-// task_id:this.dataset.id,
-// is_completed:this.checked
-
-// })
-
-// })
-
-// .then(response=>response.json())
-
-// .then(data=>{
-
-// document.getElementById(
-// "taskProgressBar"
-// ).style.width=
-// data.progress+"%";
-
-// document.getElementById(
-// "progressText"
-// ).innerText=
-// data.progress+"%";
-
-// });
-
-// });
-
-// });
-
 const taskCheckboxes = document.querySelectorAll(".taskCheckbox");
 
 taskCheckboxes.forEach(box => {

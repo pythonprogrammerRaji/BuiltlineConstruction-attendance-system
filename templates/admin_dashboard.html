@@ -73,7 +73,7 @@
                         </li>
 
                         <li class="nav-item">
-                         <a class="nav-link text-white" href="/office-dashboard">Office Staff</a>
+                         <a class="nav-link text-white" href="/office-dashboard">Supervisor</a>
                         </li>
 
                         <li class="nav-item">
@@ -222,7 +222,7 @@
             <div class="row px-4">
                 {% for project in projects %}
                 <div class="col-md-4 mb-4">
-                    <div class="card shadow p-4 project-card">
+                    <!-- <div class="card shadow p-4 project-card">
                         <h4>{{ project.project_name }}</h4>
                         <p>
                             <strong>Engineer: </strong>{{ project.assigned_engineer }}
@@ -250,6 +250,65 @@
                         <a href="/project/{{project.project_name}}" class="btn btn-primary w-100">
                             Back to Project <span class="text-blod">{{ project.project_name }}</span>
                         </a>
+                    </div> -->
+
+                    <div class="card shadow p-4 project-card">
+
+                    <h4 class="fw-bold">{{ project.project_name }}</h4>
+
+                    <!-- engineer name shown normally, edit button next to it -->
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <p class="mb-0">
+                        <strong>Engineer:</strong>
+                        <span id="eng-view-{{ project.project_name }}">{{ project.assigned_engineer }}</span>
+                        </p>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                onclick="toggleEngineerEdit('{{ project.project_name }}')">
+                        <i class="bi bi-pencil"></i> Edit
+                        </button>
+                    </div>
+
+                    <!-- hidden by default — shows when Edit is clicked -->
+                    <form method="POST"
+                            action="/change-project-engineer"
+                            class="mb-3 d-none"
+                            id="eng-edit-form-{{ project.project_name }}">
+
+                        <input type="hidden" name="project_name" value="{{ project.project_name }}">
+
+                        <div class="d-flex gap-2 align-items-center">
+                        <!-- normal text input — admin types any name freely -->
+                        <input type="text"
+                                name="new_engineer"
+                                class="form-control form-control-sm"
+                                value="{{ project.assigned_engineer }}"
+                                placeholder="Type engineer name">
+                        <button type="submit" class="btn btn-sm btn-warning">Save</button>
+                        <button type="button"
+                                class="btn btn-sm btn-secondary"
+                                onclick="toggleEngineerEdit('{{ project.project_name }}')">
+                            Cancel
+                        </button>
+                        </div>
+                    </form>
+
+                    <!-- existing status form stays same -->
+                    <form method="POST" action="/change-project-status" class="mt-2 mb-2">
+                        <input type="hidden" name="project_name" value="{{ project.project_name }}">
+                        <div class="d-flex gap-2 align-items-center">
+                        <select name="status" class="form-select form-select-sm">
+                            <option value="Ongoing" {% if project.status == "Ongoing" %}selected{% endif %}>Ongoing</option>
+                            <option value="Completed" {% if project.status == "Completed" %}selected{% endif %}>Completed</option>
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                        </div>
+                    </form>
+
+                    <a href="/project/{{ project.project_name }}" class="btn btn-primary w-100">
+                        Open Project
+                    </a>
+
                     </div>
                 </div>
 
@@ -260,7 +319,7 @@
 
         <!-- site Engineer checkin and checkout  -->
         <section class="container-fluid px-4">
-            <h2 class="text-center">Site Engineers And Office Staff Check-in / Checkout</h2>
+            <h2 class="text-center">Site Engineers And Supervisor Check-in / Checkout</h2>
             <div class="row">
                 {% for item in attendance %}
                 <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
@@ -503,6 +562,25 @@ function markAllRead() {
     loadNotifications();
     document.getElementById("notif-dropdown").style.display = "none";
   });
+}
+
+// toggles between showing the engineer name text
+// and showing the editable text input + Save/Cancel buttons
+function toggleEngineerEdit(projectName) {
+
+    // build the exact ids used in the HTML above
+    const viewSpan = document.getElementById("eng-view-" + projectName);
+    const editForm = document.getElementById("eng-edit-form-" + projectName);
+
+    // if form is currently hidden, show it and hide the plain text
+    // if form is currently visible, hide it and show plain text again
+    if (editForm.classList.contains("d-none")) {
+        editForm.classList.remove("d-none");
+        viewSpan.parentElement.classList.add("d-none");
+    } else {
+        editForm.classList.add("d-none");
+        viewSpan.parentElement.classList.remove("d-none");
+    }
 }
 </script>
    

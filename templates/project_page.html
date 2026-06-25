@@ -161,7 +161,37 @@
                     <tbody>
                         {% for worker in workers %}
                         <tr>
-                            <td>{{worker.name}}</td>
+                            <td>{{worker.name}} 
+                                <!-- same edit pattern as salary —
+                                    readonly input + pencil button + hidden save button -->
+                                <form method="POST" action="/update-worker-name"
+                                        style="display:flex;gap:4px;align-items:center;">
+
+                                    <input type="hidden" name="worker_id"    value="{{ worker.id }}">
+                                    <input type="hidden" name="project_name" value="{{ project_name }}">
+
+                                    <input type="text"
+                                        name="worker_name"
+                                        id="wname-{{ worker.id }}"
+                                        value="{{ worker.name }}"
+                                        class="form-control form-control-sm"
+                                        style="width:120px;"
+                                        readonly>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-primary"
+                                            id="wname-edit-btn-{{ worker.id }}"
+                                            onclick="editWorkerName('{{ worker.id }}')">
+                                    <i class="bi bi-pencil"></i>
+                                    </button>
+
+                                    <button type="submit"
+                                            class="btn btn-sm btn-success d-none"
+                                            id="wname-save-btn-{{ worker.id }}">
+                                    <i class="bi bi-check"></i>
+                                    </button>
+                                </form>
+                            </td>
                             <td>
                                 <form method="POST" action="/update-salary"
                                         style="display:flex;gap:4px;align-items:center;">
@@ -372,8 +402,7 @@
                     <div class="section-card">
 
                         <div class="progress mb-4" style="height:10px;">
-                        <div class="progress-bar bg-success" id="taskProgressBar"
-                            style="width: {{ (done * 100 // total) if total > 0 else 0 }} %;">
+                        <div class="progress-bar bg-success" id="taskProgressBar">
                         </div>
                         </div>
 
@@ -617,7 +646,7 @@ function saveOvertime() {
 // opens OT Details popup — fetches and lists all past OT for that worker
 function openOTDetails(workerId, workerName) {
 
-    document.getElementById("modal-title").textContent = workerName + " - OT History";
+    document.getElementById("ot-details-title").textContent = workerName + " - OT History";
 
     // call Flask to get all OT records for this worker
     fetch("/get-overtime/" + workerId)
@@ -647,6 +676,24 @@ function openOTDetails(workerId, workerName) {
         const modal = new bootstrap.Modal(document.getElementById("otDetailsModal"));
         modal.show();
     });
+}
+
+
+// makes the worker name input editable when pencil icon is clicked
+// same logic already used for salary editing
+function editWorkerName(workerId) {
+
+    const input   = document.getElementById("wname-"          + workerId);
+    const editBtn = document.getElementById("wname-edit-btn-" + workerId);
+    const saveBtn = document.getElementById("wname-save-btn-" + workerId);
+
+    // remove readonly so admin/engineer can type a new name
+    input.removeAttribute("readonly");
+    input.focus();
+
+    // hide pencil icon, show the green save/check button
+    editBtn.classList.add("d-none");
+    saveBtn.classList.remove("d-none");
 }
 
 </script>

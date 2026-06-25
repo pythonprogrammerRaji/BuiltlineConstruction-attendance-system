@@ -81,7 +81,7 @@ def login():
                         return redirect("/engineer_page")
 
                 elif role == "office":
-                    if db_role == "Office Staff":
+                    if db_role == "Supervisor":
                         session["worker_name"] = user.data[0]["full_name"]
                         session["role"]        = "office"
                         return redirect("/office-dashboard")
@@ -115,13 +115,12 @@ from datetime import datetime
 def admin_dashboard():
 
     # today in multiple formats
-    today_date = date.today().isoformat()
-    today_str1 = datetime.now().strftime("%m/%d/%Y")
-    today_str2 = str(datetime.now().month) + "/" + datetime.now().strftime("%d/%Y")
+    today_date  = date.today().isoformat()                          # 2026-06-25
+    today_str1  = datetime.now().strftime("%m/%d/%Y")                # 06/25/2026
+    today_str2  = str(datetime.now().month) + "/" + datetime.now().strftime("%d/%Y")
 
-    print("TODAY DATE:", today_date)
-    print("TODAY STR1:", today_str1)
-    print("TODAY STR2:", today_str2)
+    today_str3  = datetime.now().strftime("%d/%m/%Y")                 # 25/06/2026
+    today_str4  = str(datetime.now().day) + "/" + str(datetime.now().month) + "/" + str(datetime.now().year)  # 25/6/2026
 
     # get all engineers
     engineers = supabase.table("users")\
@@ -139,15 +138,20 @@ def admin_dashboard():
         .order("id", desc=True)\
         .execute()
 
-    print("TOTAL RECORDS IN DB:", len(all_attendance.data))
+    print("TOTAL RECORDS:", len(all_attendance.data))
     if all_attendance.data:
-        print("FIRST RECORD DATE:", all_attendance.data[0].get("date"))
+        print("LATEST RECORD DATE:", all_attendance.data[0].get("date"))
+    print("TODAY DATE FORMATS:", today_date, today_str1, today_str2)
+
+    
 
     # different devices save date differently
     attendance_today = [
         item for item in all_attendance.data
         if str(item.get("date", "")).strip() == today_str1
         or str(item.get("date", "")).strip() == today_str2
+        or str(item.get("date", "")).strip() == today_str3
+        or str(item.get("date", "")).strip() == today_str4
         or str(item.get("date", "")).strip() == today_date
     ]
 
@@ -317,9 +321,8 @@ def project_page(project_name):
     tasks = supabase.table("task").select("*").eq("project_name", project_name).eq("is_deleted", False).execute()
     workers = supabase.table("workers").select("*").eq("project_name", project_name).eq("is_deleted", False).execute()
 #   tasks = supabase.table("task").select("*").eq("assigned_engineer", engineer_name).eq("project_name", project_name).eq("is_deleted", False).execute()
-# # 
-    print("PROJECT NAME:", project_name)
-    print("TASKS FOUND:", tasks.data)
+
+    
     attendance_map={}
 
     for item in attendance.data:
@@ -328,8 +331,8 @@ def project_page(project_name):
 
     site_engineer=project.data[0]["assigned_engineer"]
 
-    print("ATTENDANCE DATA:", attendance.data)
-    print("ATTENDANCE MAP:", attendance_map)
+    # print("ATTENDANCE DATA:", attendance.data)
+    # print("ATTENDANCE MAP:", attendance_map)
 
     return render_template(
         "project_page.html",
@@ -339,6 +342,37 @@ def project_page(project_name):
         worker_name=site_engineer,
         tasks=tasks.data
     )
+
+# change the engineer name in assigned project
+@app.route("/change-project-engineer", methods=["POST"])
+def change_project_engineer():
+
+    project_name = request.form.get("project_name")
+    new_engineer = request.form.get("new_engineer")
+
+    supabase.table("project_assignments")\
+        .update({"assigned_engineer": new_engineer})\
+        .eq("project_name", project_name)\
+        .execute()
+
+    return redirect("/admin-dashboard")
+
+# this route runs when site engineer edits and saves a corrected worker name
+@app.route("/update-worker-name", methods=["POST"])
+def update_worker_name():
+
+    worker_id    = request.form.get("worker_id")
+    new_name     = request.form.get("worker_name")
+    project_name = request.form.get("project_name")
+
+    # update only the name column for this specific worker
+    supabase.table("workers")\
+        .update({"name": new_name})\
+        .eq("id", worker_id)\
+        .execute()
+
+    # go back to the same project page to see the updated name
+    return redirect(f"/project/{project_name}")
 
 
 @app.route("/add-worker", methods=["POST"])
@@ -497,6 +531,8 @@ def save_attendance_checkin():
                 "success":False,
                 "error":"No image received"
             })
+        
+        date = datetime.now().strftime("%Y-%m-%d") 
 
         filename=str(int(time.time()))+"_"+image.filename
 
@@ -1103,8 +1139,6 @@ def get_notifications():
     role        = session.get("role")
     worker_name = session.get("worker_name")
 
-    print("ROLE:", role)
-    print("WORKER NAME:", worker_name)
 
     notifs = supabase.table("notifications")\
         .select("*")\
@@ -1114,7 +1148,6 @@ def get_notifications():
         .limit(10)\
         .execute()
 
-    print("NOTIFICATIONS:", notifs.data)
 
     return jsonify({"notifications": notifs.data})
 
