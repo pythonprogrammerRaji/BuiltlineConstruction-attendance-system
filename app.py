@@ -972,7 +972,21 @@ def update_salary():
     project_name = request.form.get("project_name")
     return redirect(f"/project/{project_name}")
 
+# this route saves the worker type whenever engineer changes the dropdown
+@app.route("/update-worker-type", methods=["POST"])
+def update_worker_type():
 
+    worker_id    = request.form.get("worker_id")
+    worker_type  = request.form.get("worker_type")
+    project_name = request.form.get("project_name")
+
+    # update only the worker_type column for this worker
+    supabase.table("workers")\
+        .update({"worker_type": worker_type})\
+        .eq("id", worker_id)\
+        .execute()
+
+    return redirect(f"/project/{project_name}")
 
 from flask import send_file
 
