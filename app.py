@@ -694,6 +694,9 @@ def delete_engineer_task(engineer,project_name):
 
     return redirect("/admin-dashboard")
 
+import io
+from flask import send_file
+
 
 # Attendance reset
 from datetime import datetime
@@ -766,10 +769,42 @@ def restart_attendance():
         project_name = project["project_name"].strip()
         engineer = project["assigned_engineer"]
 
-        file_name = os.path.join(
-            history_folder,
-            f"{project_name}_{week_name}.xlsx"
-        )
+        # file_name = os.path.join(
+        #     history_folder,
+        #     f"{project_name}_{week_name}.xlsx"
+        # )
+
+
+        # instead of saving to a folder on disk,
+        # we save the Excel file into memory (RAM) only
+        excel_buffer = io.BytesIO()
+        wb.save(excel_buffer)
+        excel_buffer.seek(0)   # move back to start of the file so it can be read
+
+        # upload this in-memory file to Supabase Storage instead of local disk
+        # this way the file persists even if Render restarts the app
+        filename_in_storage = f"history/{project_name}_{week_name}.xlsx"
+
+        supabase.storage.from_("attendance-images").upload(
+            path         = filename_in_storage,
+            file         = excel_buffer.getvalue(),
+            file_options = {
+                "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "upsert":       "true"
+            }
+            )
+
+    # get a public URL for this excel file from Supabase storage
+        excel_url = supabase.storage.from_("attendance-images")\
+            .get_public_url(filename_in_storage)
+
+        # save this URL instead of a local file_name
+        supabase.table("attendance_history").insert({
+            "project_name":      project_name,
+            "assigned_engineer": engineer,
+            "week_name":         week_name,
+            "file_name":         excel_url   # now a real downloadable link, not a local path
+        }).execute()
 
         # Get attendance
         attendance = supabase.table(
