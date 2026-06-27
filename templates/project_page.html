@@ -187,61 +187,25 @@
                                     </select>
                                 </form>
                             </td>
-                            <td>{{worker.name}} 
-                                <!-- same edit pattern as salary —
-                                    readonly input + pencil button + hidden save button -->
-                                <form method="POST" action="/update-worker-name"
-                                        style="display:flex;gap:4px;align-items:center;">
-
-                                    <input type="hidden" name="worker_id"    value="{{ worker.id }}">
-                                    <input type="hidden" name="project_name" value="{{ project_name }}">
-
-                                    <input type="text"
-                                        name="worker_name"
-                                        id="wname-{{ worker.id }}"
-                                        value="{{ worker.name }}"
-                                        class="form-control form-control-sm"
-                                        style="width:120px;"
-                                        readonly>
-
-                                    <button type="button"
-                                            class="btn btn-sm btn-primary"
-                                            id="wname-edit-btn-{{ worker.id }}"
-                                            onclick="editWorkerName('{{ worker.id }}')">
-                                    <i class="bi bi-pencil"></i>
-                                    </button>
-
-                                    <button type="submit"
-                                            class="btn btn-sm btn-success d-none"
-                                            id="wname-save-btn-{{ worker.id }}">
-                                    <i class="bi bi-check"></i>
-                                    </button>
-                                </form>
-                            </td>
                             <td>
-                                <form method="POST" action="/update-salary"
-                                        style="display:flex;gap:4px;align-items:center;">
-                                    <input type="hidden" name="worker_id"    value="{{ worker.id }}">
-                                    <input type="hidden" name="project_name" value="{{ project_name }}">
-                                    <input type="number"
-                                        name="salary"
-                                        id="salary-{{ worker.id }}"
-                                        value="{{ worker.salary or 0 }}"
-                                        class="form-control form-control-sm"
-                                        style="width:90px;"
-                                        readonly>
-                                    <button type="button"
-                                            class="btn btn-sm btn-primary"
-                                            id="edit-btn-{{ worker.id }}"
-                                            onclick="editSalary('{{ worker.id }}')">
-                                    <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button type="submit"
-                                            class="btn btn-sm btn-success d-none"
-                                            id="save-btn-{{ worker.id }}">
-                                    <i class="bi bi-check"></i>
-                                    </button>
-                                </form>
+                                <p class="worker-heading" id="worker-heading-{{ worker.id }}">{{ worker.name }}</p>
+
+                                <input type="text"
+                                    name="worker_name"
+                                    id="worker-input-{{ worker.id }}"
+                                    value="{{ worker.name }}"
+                                    class="form-control form-control-sm"
+                                    style="width:120px;"
+                                    oninput="updateHeadingLive('{{ worker.id }}', this.value)"
+                                    onblur="autoSaveWorkerName('{{ worker.id }}', '{{ project_name }}', this.value)">
+                            </td>
+                           <td>
+                            <input type="number"
+                                    name="salary"
+                                    value="{{ worker.salary or 0 }}"
+                                    class="form-control form-control-sm"
+                                    style="width:90px;"
+                                    onblur="autoSaveSalary('{{ worker.id }}', '{{ project_name }}', this.value)">
                             </td>
                             <td>
                                 <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Mon','{{worker.id}}','{{worker.name}}')">
@@ -524,18 +488,51 @@
 
 
 <script>
-    function editSalary(workerId) {
-  const input   = document.getElementById("salary-"    + workerId);
-  const editBtn = document.getElementById("edit-btn-"  + workerId);
-  const saveBtn = document.getElementById("save-btn-"  + workerId);
+ // called automatically the moment the worker name input loses focus
+// (user clicks somewhere else on the page, or presses Tab)
+// no Save button needed — this fires by itself
+// fires on EVERY keystroke while typing — purely visual, no database call
+// this keeps typing fast and responsive since it never waits on the network
+function updateHeadingLive(workerId, currentText) {
 
-  // make input editable
-  input.removeAttribute("readonly");
-  input.focus();
+    const heading = document.getElementById("worker-heading-" + workerId);
 
-  // hide edit button show save button
-  editBtn.classList.add("d-none");
-  saveBtn.classList.remove("d-none");
+    if (heading) {
+        // show exactly what's been typed so far, live, as they type
+        heading.textContent = currentText;
+    }
+}
+ 
+
+// fires only ONCE, when the engineer taps away from the input
+// this is the one that actually talks to Flask and saves to Supabase
+function autoSaveWorkerName(workerId, projectName, newName) {
+
+    const formData = new FormData();
+    formData.append("worker_id",    workerId);
+    formData.append("worker_name",  newName);
+    formData.append("project_name", projectName);
+
+    fetch("/update-worker-name", {
+        method: "POST",
+        body: formData
+    });
+    // heading is already updated live by updateHeadingLive,
+    // so nothing extra needed here after save succeeds
+}
+
+// same pattern for salary — fires automatically on blur
+function autoSaveSalary(workerId, projectName, newSalary) {
+
+    const formData = new FormData();
+    formData.append("worker_id",    workerId);
+    formData.append("salary",       newSalary);
+    formData.append("project_name", projectName);
+
+    fetch("/update-salary", {
+        method: "POST",
+        body: formData
+    });
 }
 </script>
 
