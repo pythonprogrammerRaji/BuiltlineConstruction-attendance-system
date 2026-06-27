@@ -357,24 +357,6 @@ def change_project_engineer():
 
     return redirect("/admin-dashboard")
 
-# this route runs when site engineer edits and saves a corrected worker name
-@app.route("/update-worker-name", methods=["POST"])
-def update_worker_name():
-
-    worker_id    = request.form.get("worker_id")
-    new_name     = request.form.get("worker_name")
-    project_name = request.form.get("project_name")
-
-    # update only the name column for this specific worker
-    supabase.table("workers")\
-        .update({"name": new_name})\
-        .eq("id", worker_id)\
-        .execute()
-
-    # go back to the same project page to see the updated name
-    return redirect(f"/project/{project_name}")
-
-
 @app.route("/add-worker", methods=["POST"])
 def add_worker():
 
@@ -958,6 +940,24 @@ def restart_attendance():
     </script>
     """
 
+# this route now responds to a quiet background fetch() call,
+# not a full page form submission — so we return a simple JSON
+# response instead of redirecting to a new page
+@app.route("/update-worker-name", methods=["POST"])
+def update_worker_name():
+
+    worker_id   = request.form.get("worker_id")
+    new_name    = request.form.get("worker_name")
+
+    supabase.table("workers")\
+        .update({"name": new_name})\
+        .eq("id", worker_id)\
+        .execute()
+
+    # just confirm success — no redirect, no page reload
+    return jsonify({"success": True})
+
+
 @app.route("/update-salary", methods=["POST"])
 def update_salary():
 
@@ -969,8 +969,7 @@ def update_salary():
         .eq("id", worker_id)\
         .execute()
 
-    project_name = request.form.get("project_name")
-    return redirect(f"/project/{project_name}")
+    return jsonify({"success": True})
 
 # this route saves the worker type whenever engineer changes the dropdown
 @app.route("/update-worker-type", methods=["POST"])
