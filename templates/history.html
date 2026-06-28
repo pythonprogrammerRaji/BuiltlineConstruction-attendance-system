@@ -96,7 +96,9 @@
                         <h4>{{item.project_name}}</h4>
                         <p><strong>Engineer : </strong> {{item.assigned_engineer}}</p>
                         <p><strong>Week : </strong> {{item.week_name}}</p>
-                        <a href="/download/{{item.file_name}}" class="btn btn-success">Download Attendance Sheet</a>
+                        <a href="{{ item.file_name }}" target="_blank" class="btn btn-sm btn-primary">
+                            <i class="bi bi-download"></i> Download Excel
+                        </a>
                     </div>
                 </div>
                 {% endfor %}

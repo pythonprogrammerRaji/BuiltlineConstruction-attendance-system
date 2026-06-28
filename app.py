@@ -698,8 +698,262 @@ import io
 from flask import send_file
 
 
+# # Attendance reset
+# from datetime import datetime
+# @app.route("/restart-attendance")
+# def restart_attendance():
+
+#     today = datetime.now().strftime("%A")
+
+#     # Allow only Monday
+#     if today != "Monday":
+#         return """
+#         <script>
+#         alert('Attendance reset only available on Monday');
+#         window.location.href='/admin-dashboard';
+#         </script>
+#         """
+
+#     # Get all projects
+#     projects = supabase.table(
+#         "project_assignments"
+#     ).select("*").execute()
+
+#     # # Project base folder
+#     # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+#     # # Create history folder automatically
+#     # history_folder = os.path.join(BASE_DIR,"history")
+#     # os.makedirs(history_folder,exist_ok=True)
+#     # Week date
+#     # week_name = datetime.now().strftime("%d-%m-%Y")
+
+#     today = datetime.now()
+
+#     # Monday date
+#     start_date = today - timedelta(days=today.weekday())
+
+#     # Sunday date
+#     end_date = start_date + timedelta(days=6)
+
+#     week_name = (
+#         start_date.strftime("%d-%m-%Y")
+#         + " to " +
+#         end_date.strftime("%d-%m-%Y")
+#     )
+
+#     today = datetime.now()
+
+#     # Monday date
+#     start_date = today - timedelta(days=today.weekday())
+
+#     # Sunday date
+#     end_date = start_date + timedelta(days=6)
+
+#     week_name = (
+#         start_date.strftime("%d-%m-%Y")
+#         + " to " +
+#         end_date.strftime("%d-%m-%Y")
+#     )
+
+#     # Loop through all projects
+#     for project in projects.data:
+
+#         project_name = project["project_name"].strip()
+#         engineer = project["assigned_engineer"]
+
+#         # file_name = os.path.join(
+#         #     history_folder,
+#         #     f"{project_name}_{week_name}.xlsx"
+#         # )
+
+
+#         # instead of saving to a folder on disk,
+#         # we save the Excel file into memory (RAM) only
+#         excel_buffer = io.BytesIO()
+#         wb.save(excel_buffer)
+#         excel_buffer.seek(0)   # move back to start of the file so it can be read
+
+#         # upload this in-memory file to Supabase Storage instead of local disk
+#         # this way the file persists even if Render restarts the app
+#         filename_in_storage = f"history/{project_name}_{week_name}.xlsx"
+
+#         supabase.storage.from_("attendance-images").upload(
+#             path         = filename_in_storage,
+#             file         = excel_buffer.getvalue(),
+#             file_options = {
+#                 "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+#                 "upsert":       "true"
+#             }
+#             )
+
+#     # get a public URL for this excel file from Supabase storage
+#         excel_url = supabase.storage.from_("attendance-images")\
+#             .get_public_url(filename_in_storage)
+
+#         # save this URL instead of a local file_name
+#         supabase.table("attendance_history").insert({
+#             "project_name":      project_name,
+#             "assigned_engineer": engineer,
+#             "week_name":         week_name,
+#             "file_name":         excel_url   # now a real downloadable link, not a local path
+#         }).execute()
+
+#         # Get attendance
+#         attendance = supabase.table(
+#             "attendance"
+#         ).select("*").eq(
+#             "project_name",
+#             project_name
+#         ).execute()
+
+#         # Get workers
+#         workers = supabase.table(
+#             "workers"
+#         ).select("*").eq(
+#             "project_name",
+#             project_name
+#         ).execute()
+
+
+#         # Create workbook
+#         wb = Workbook()
+#         ws = wb.active
+#         ws.title = "Attendance"
+
+#         # Excel Header
+#         ws.append(["Worker Name","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Total Day"])
+
+#         days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
+
+#         # One worker = One row
+#         for worker in workers.data:
+
+#             row = [worker["name"]]
+#             total_day = 0
+
+#             for day in days:
+
+#                 attendance_value = "--"
+
+#                 for item in attendance.data:
+
+#                     if (
+#                         str(item["worker_id"]) == str(worker["id"])
+#                         and item["day_name"] == day
+#                     ):
+
+#                         attendance_value = item["value"]
+
+#                         # Calculate total
+#                         if attendance_value == "1d":
+#                             total_day += 1
+#                         elif attendance_value == "0.5d":
+#                             total_day += 0.5
+#                         elif attendance_value == "1.5d":
+#                             total_day += 1.5
+#                         elif attendance_value == "2d":
+#                             total_day += 2
+#                         elif attendance_value == "2.5d":
+#                             total_day += 2.5
+
+#                         break
+
+#                 row.append(attendance_value)
+
+#             # Add total
+#             row.append(f"{total_day} d")
+
+#             # Add row to Excel
+#             ws.append(row)
+
+#         # Save Excel file
+#         try:
+#             wb.save(file_name)
+#             print("FILE EXISTS:", os.path.exists(file_name))
+#             print("FILE NAME:", file_name)
+
+#         except Exception as e:
+#             print("SAVE ERROR:", e)
+
+#         # Save history in DB
+#         supabase.table(
+#             "attendance_history"
+#         ).insert({
+#             "project_name": project_name,
+#             "assigned_engineer": engineer,
+#             "week_name": week_name,
+#             "file_name": file_name
+#         }).execute()
+
+#     # Reset attendance
+#     supabase.table(
+#         "attendance"
+#     ).delete().not_.is_(
+#         "project_name",
+#         "null"
+#     ).execute()
+
+#     # move old tasks to history table before deleting
+#     # tasks older than one week go to task_history
+#     today_dt  = datetime.now()
+#     monday    = today_dt - timedelta(days=today_dt.weekday())
+
+#     old_tasks = supabase.table("task")\
+#         .select("*")\
+#         .lt("created_at", monday.strftime("%Y-%m-%d"))\
+#         .execute()
+
+#     for task in old_tasks.data:
+#         # save each old task to task_history table
+#         supabase.table("task_history").insert({
+#             "assigned_engineer": task["assigned_engineer"],
+#             "project_name":      task["project_name"],
+#             "task_name":         task["task_name"],
+#             "is_completed":      task["is_completed"],
+#             "created_at":        task["created_at"]
+#         }).execute()
+
+#     # now delete old tasks from main task table
+#     supabase.table("task")\
+#         .delete()\
+#         .lt("created_at", monday.strftime("%Y-%m-%d"))\
+#         .execute()
+
+#     # delete checkin photos older than 15 days
+#     cutoff = (datetime.now() - timedelta(days=15)).strftime("%Y-%m-%d")
+
+#     old_photos = supabase.table("attendance_checkin")\
+#         .select("*")\
+#         .lt("date", cutoff)\
+#         .execute()
+
+#     for record in old_photos.data:
+#         if record.get("image_url"):
+#             try:
+#                 filename = record["image_url"].split("/")[-1]
+#                 supabase.storage.from_("attendance-images")\
+#                     .remove([filename])
+#             except:
+#                 pass
+
+#     # delete old checkin records from database
+#     supabase.table("attendance_checkin")\
+#         .delete()\
+#         .lt("date", cutoff)\
+#         .execute()
+
+#     return """
+#     <script>
+#     alert('Attendance Reset Success');
+#     window.location.href='/admin-dashboard';
+#     </script>
+#     """
+
+
 # Attendance reset
 from datetime import datetime
+import io   # needed for in-memory Excel file handling
+
 @app.route("/restart-attendance")
 def restart_attendance():
 
@@ -715,143 +969,52 @@ def restart_attendance():
         """
 
     # Get all projects
-    projects = supabase.table(
-        "project_assignments"
-    ).select("*").execute()
+    projects = supabase.table("project_assignments").select("*").execute()
 
-    # Project base folder
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    today_dt = datetime.now()
 
-    # Create history folder automatically
-    history_folder = os.path.join(
-        BASE_DIR,
-        "history"
-    )
+    # Monday date of this week
+    start_date = today_dt - timedelta(days=today_dt.weekday())
 
-    os.makedirs(
-        history_folder,
-        exist_ok=True
-    )
-    # Week date
-    # week_name = datetime.now().strftime("%d-%m-%Y")
-
-    today = datetime.now()
-
-    # Monday date
-    start_date = today - timedelta(days=today.weekday())
-
-    # Sunday date
+    # Sunday date of this week
     end_date = start_date + timedelta(days=6)
 
+    # week label shown in history, e.g. "22-06-2026 to 28-06-2026"
     week_name = (
         start_date.strftime("%d-%m-%Y")
         + " to " +
         end_date.strftime("%d-%m-%Y")
     )
 
-    today = datetime.now()
-
-    # Monday date
-    start_date = today - timedelta(days=today.weekday())
-
-    # Sunday date
-    end_date = start_date + timedelta(days=6)
-
-    week_name = (
-        start_date.strftime("%d-%m-%Y")
-        + " to " +
-        end_date.strftime("%d-%m-%Y")
-    )
-
-    # Loop through all projects
+    # Loop through every project — build, save, and upload ONE excel file per project
     for project in projects.data:
 
         project_name = project["project_name"].strip()
-        engineer = project["assigned_engineer"]
+        engineer      = project["assigned_engineer"]
 
-        # file_name = os.path.join(
-        #     history_folder,
-        #     f"{project_name}_{week_name}.xlsx"
-        # )
+        # ── get this project's attendance and workers first ──
+        # we need this data BEFORE building the excel sheet,
+        # since the excel rows are built from these two queries
+        attendance = supabase.table("attendance")\
+            .select("*")\
+            .eq("project_name", project_name)\
+            .execute()
 
+        workers = supabase.table("workers")\
+            .select("*")\
+            .eq("project_name", project_name)\
+            .execute()
 
-        # instead of saving to a folder on disk,
-        # we save the Excel file into memory (RAM) only
-        excel_buffer = io.BytesIO()
-        wb.save(excel_buffer)
-        excel_buffer.seek(0)   # move back to start of the file so it can be read
-
-        # upload this in-memory file to Supabase Storage instead of local disk
-        # this way the file persists even if Render restarts the app
-        filename_in_storage = f"history/{project_name}_{week_name}.xlsx"
-
-        supabase.storage.from_("attendance-images").upload(
-            path         = filename_in_storage,
-            file         = excel_buffer.getvalue(),
-            file_options = {
-                "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "upsert":       "true"
-            }
-            )
-
-    # get a public URL for this excel file from Supabase storage
-        excel_url = supabase.storage.from_("attendance-images")\
-            .get_public_url(filename_in_storage)
-
-        # save this URL instead of a local file_name
-        supabase.table("attendance_history").insert({
-            "project_name":      project_name,
-            "assigned_engineer": engineer,
-            "week_name":         week_name,
-            "file_name":         excel_url   # now a real downloadable link, not a local path
-        }).execute()
-
-        # Get attendance
-        attendance = supabase.table(
-            "attendance"
-        ).select("*").eq(
-            "project_name",
-            project_name
-        ).execute()
-
-        # Get workers
-        workers = supabase.table(
-            "workers"
-        ).select("*").eq(
-            "project_name",
-            project_name
-        ).execute()
-
-
-        # Create workbook
+        # ── build the excel workbook for this project ──
         wb = Workbook()
         ws = wb.active
         ws.title = "Attendance"
 
-        # Excel Header
-        ws.append([
-            "Worker Name",
-            "Mon",
-            "Tue",
-            "Wed",
-            "Thu",
-            "Fri",
-            "Sat",
-            "Sun",
-            "Total Day"
-        ])
+        ws.append(["Worker Name", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Total Day"])
 
-        days = [
-            "Mon",
-            "Tue",
-            "Wed",
-            "Thu",
-            "Fri",
-            "Sat",
-            "Sun"
-        ]
+        days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-        # One worker = One row
+        # one worker = one row in the excel sheet
         for worker in workers.data:
 
             row = [worker["name"]]
@@ -862,15 +1025,13 @@ def restart_attendance():
                 attendance_value = "--"
 
                 for item in attendance.data:
-
                     if (
                         str(item["worker_id"]) == str(worker["id"])
                         and item["day_name"] == day
                     ):
-
                         attendance_value = item["value"]
 
-                        # Calculate total
+                        # add up total days worked this week
                         if attendance_value == "1d":
                             total_day += 1
                         elif attendance_value == "0.5d":
@@ -886,43 +1047,49 @@ def restart_attendance():
 
                 row.append(attendance_value)
 
-            # Add total
             row.append(f"{total_day} d")
-
-            # Add row to Excel
             ws.append(row)
 
-        # Save Excel file
-        try:
-            wb.save(file_name)
-            print("FILE EXISTS:", os.path.exists(file_name))
-            print("FILE NAME:", file_name)
+        # ── NOW that wb is fully built and filled, save it ──
+        # save into memory (RAM) instead of writing to local disk
+        # this is the part that makes it work identically on Render and locally
+        excel_buffer = io.BytesIO()
+        wb.save(excel_buffer)
+        excel_buffer.seek(0)   # rewind so it can be read for upload
 
-        except Exception as e:
-            print("SAVE ERROR:", e)
+        # unique path inside the same storage bucket already used for selfies
+        storage_path = f"history/{project_name}_{week_name}.xlsx"
 
-        # Save history in DB
-        supabase.table(
-            "attendance_history"
-        ).insert({
-            "project_name": project_name,
+        # upload the in-memory excel file to Supabase Storage
+        supabase.storage.from_("attendance-images").upload(
+            path         = storage_path,
+            file         = excel_buffer.getvalue(),
+            file_options = {
+                "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "upsert":        "true"
+            }
+        )
+
+        # get the real public URL — THIS is what makes the download button work
+        excel_url = supabase.storage.from_("attendance-images")\
+            .get_public_url(storage_path)
+
+        # save the real URL (not a local path) into attendance_history
+        supabase.table("attendance_history").insert({
+            "project_name":      project_name,
             "assigned_engineer": engineer,
-            "week_name": week_name,
-            "file_name": file_name
+            "week_name":         week_name,
+            "file_name":         excel_url
         }).execute()
 
-    # Reset attendance
-    supabase.table(
-        "attendance"
-    ).delete().not_.is_(
-        "project_name",
-        "null"
-    ).execute()
+    # ── reset attendance for the new week ──
+    supabase.table("attendance")\
+        .delete()\
+        .not_.is_("project_name", "null")\
+        .execute()
 
-    # move old tasks to history table before deleting
-    # tasks older than one week go to task_history
-    today_dt  = datetime.now()
-    monday    = today_dt - timedelta(days=today_dt.weekday())
+    # ── move old tasks (older than this week) to task_history ──
+    monday = today_dt - timedelta(days=today_dt.weekday())
 
     old_tasks = supabase.table("task")\
         .select("*")\
@@ -930,7 +1097,6 @@ def restart_attendance():
         .execute()
 
     for task in old_tasks.data:
-        # save each old task to task_history table
         supabase.table("task_history").insert({
             "assigned_engineer": task["assigned_engineer"],
             "project_name":      task["project_name"],
@@ -939,13 +1105,12 @@ def restart_attendance():
             "created_at":        task["created_at"]
         }).execute()
 
-    # now delete old tasks from main task table
     supabase.table("task")\
         .delete()\
         .lt("created_at", monday.strftime("%Y-%m-%d"))\
         .execute()
 
-    # delete checkin photos older than 15 days
+    # ── delete checkin photos older than 15 days ──
     cutoff = (datetime.now() - timedelta(days=15)).strftime("%Y-%m-%d")
 
     old_photos = supabase.table("attendance_checkin")\
@@ -962,7 +1127,6 @@ def restart_attendance():
             except:
                 pass
 
-    # delete old checkin records from database
     supabase.table("attendance_checkin")\
         .delete()\
         .lt("date", cutoff)\
@@ -974,6 +1138,37 @@ def restart_attendance():
     window.location.href='/admin-dashboard';
     </script>
     """
+
+# TEMPORARY test route — safe to use anytime, does not touch real attendance data
+# delete this route once you've confirmed the upload works correctly
+@app.route("/test-excel-upload")
+def test_excel_upload():
+
+    # build a tiny fake excel file, completely separate from real data
+    wb = Workbook()
+    ws = wb.active
+    ws.append(["Test Worker", "1d", "0.5d", "--", "--", "--", "--", "--", "1.5 d"])
+
+    excel_buffer = io.BytesIO()
+    wb.save(excel_buffer)
+    excel_buffer.seek(0)
+
+    storage_path = "history/TEST_FILE_DELETE_ME.xlsx"
+
+    supabase.storage.from_("attendance-images").upload(
+        path         = storage_path,
+        file         = excel_buffer.getvalue(),
+        file_options = {
+            "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "upsert":        "true"
+        }
+    )
+
+    excel_url = supabase.storage.from_("attendance-images")\
+        .get_public_url(storage_path)
+
+    # just show the link directly in browser instead of saving to database
+    return f"Upload worked. Click to test download: <a href='{excel_url}'>{excel_url}</a>"
 
 # this route now responds to a quiet background fetch() call,
 # not a full page form submission — so we return a simple JSON
@@ -1024,16 +1219,16 @@ def update_worker_type():
 
 from flask import send_file
 
-@app.route("/download/<path:file_name>")
-def download_file(file_name):
+# @app.route("/download/<path:file_name>")
+# def download_file(file_name):
      
 
-    print("DOWNLOADING:", file_name)
+#     print("DOWNLOADING:", file_name)
 
-    return send_file(
-        file_name,
-        as_attachment=True
-    )
+#     return send_file(
+#         file_name,
+#         as_attachment=True
+#     )
 
 #profile .
 # engineer sees their own profile
