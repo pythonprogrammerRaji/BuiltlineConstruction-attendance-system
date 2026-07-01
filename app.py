@@ -143,6 +143,10 @@ def admin_dashboard():
         print("LATEST RECORD DATE:", all_attendance.data[0].get("date"))
     print("TODAY DATE FORMATS:", today_date, today_str1, today_str2)
 
+    all_total     = len(projects.data)
+    all_ongoing   = len([p for p in projects.data if p["status"] == "Ongoing"])
+    all_completed = len([p for p in projects.data if p["status"] == "Completed"])
+    all_engineers  = len(set(p["assigned_engineer"] for p in projects.data))
     
 
     # different devices save date differently
@@ -169,7 +173,11 @@ def admin_dashboard():
         projects   = projects.data,
         attendance = attendance_today,
         tasks      = tasks.data,
-        today      = today_date
+        today      = today_date,
+        all_total =  all_total,
+        all_ongoing = all_ongoing,
+        all_completed = all_completed, all_engineers = all_engineers
+
     )
 
 @app.route("/history")
@@ -275,35 +283,50 @@ def engineer_page():
     if not worker_name:
         return redirect("/login")
 
+    all_projects = supabase.table("project_assignments").select("*").eq("is_deleted", False).execute()
+
     # get all projects for counts
-    all_projects = supabase.table("project_assignments")\
-        .select("*")\
-        .eq("is_deleted", False)\
-        .execute()
+    my_projects = supabase.table("project_assignments").select("*").eq("assigned_engineer", worker_name).eq("is_deleted", False).execute()
+    my_total     = len(my_projects.data)
+    my_ongoing   = len([p for p in my_projects.data if p["status"] == "Ongoing"])
+    my_completed = len([p for p in my_projects.data if p["status"] == "Completed"])
 
-    ongoing_count   = len([p for p in all_projects.data if p["status"] == "Ongoing"])
-    completed_count = len([p for p in all_projects.data if p["status"] == "Completed"])
-
-    # admin sees all projects
     if role == "admin":
         projects = all_projects.data
-
-    # engineer sees only their projects
+        total_projects = len(all_projects.data)
+        ongoing_count   = len([p for p in all_projects.data if p["status"] == "Ongoing"])
+        completed_count = len([p for p in all_projects.data if p["status"] == "Completed"])
+        engineer_count  = len(set(p["assigned_engineer"] for p in all_projects.data))
     else:
-        my_projects = supabase.table("project_assignments")\
-            .select("*")\
-            .eq("assigned_engineer", worker_name)\
-            .eq("is_deleted", False)\
-            .execute()
         projects = my_projects.data
+        total_projects = my_total
+        ongoing_count = my_ongoing
+        completed_count = my_completed
+        engineer_count = 1
+    
+
+    # # admin sees all projects
+    # if role == "admin":
+    #     projects = all_projects.data
+
+    # # engineer sees only their projects
+    # else:
+    #     my_projects = supabase.table("project_assignments")\
+    #         .select("*")\
+    #         .eq("assigned_engineer", worker_name)\
+    #         .eq("is_deleted", False)\
+    #         .execute()
+    #     projects = my_projects.data
 
     return render_template(
         "engineer_home.html",
         projects        = projects,
-        total_projects  = len(all_projects.data),
+        total_projects  = total_projects,
         ongoing_count   = ongoing_count,
         completed_count = completed_count,
-        engineer_name   = worker_name
+        engineer_name   = worker_name, 
+        engineer_count = engineer_count,
+        role = role
     )
 
 @app.route("/office-dashboard")
@@ -1010,14 +1033,15 @@ def restart_attendance():
         ws = wb.active
         ws.title = "Attendance"
 
-        ws.append(["Worker Name", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Total Day"])
+        ws.append(["Worker Name", "Type", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Total Day", "OT Hours",      # total overtime hours this worker did this week
+        "OT Details"])
 
         days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
         # one worker = one row in the excel sheet
         for worker in workers.data:
 
-            row = [worker["name"]]
+            row = [worker["name"], worker.get("worker_type", "--")]
             total_day = 0
 
             for day in days:
@@ -1048,6 +1072,24 @@ def restart_attendance():
                 row.append(attendance_value)
 
             row.append(f"{total_day} d")
+
+
+            worker_ot = supabase.table("overtime").select("*").eq("worker_id", worker["id"]).execute()
+            if worker_ot.data:
+                total_ot = sum(float(r.get("ot_hours", 0)) for r in worker_ot.data)
+                ot_details_parts=[]
+                for r in worker_ot.data:
+                    ot_details_parts.append(
+                        f"{r.get('date','')} {r.get('start_time', '')} - {r.get('end_time','')} ({r.get('ot_hours','')} hrs)"
+                    )
+                ot_details_str = " | ".join(ot_details_parts) 
+
+                row.append(f"{total_ot} hrs")
+                row.append(ot_details_str)
+            else:
+                row.append("0 hrs")
+                row.append("No OT")
+
             ws.append(row)
 
         # ── NOW that wb is fully built and filled, save it ──

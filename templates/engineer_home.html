@@ -197,9 +197,6 @@
         
     </div>
 
-    
-    
-
     <!-- Header -->
     <div class="header-card shadow mb-4">
 
@@ -225,162 +222,35 @@
 
     </div>
 
-
-    <!-- Stats Cards -->
-    <!-- <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card shadow stat-card">
-                <h5>Total Projects</h5>
-                <h2>
-                    {{ projects|length }}
-                </h2>
-            </div>
-        </div>
-
-
-        <div class="col-md-3 mb-3">
-            <div class="card shadow stat-card">
-                <h5>Total Engineers</h5>
-                <h2>
-                    {{ projects|length }}
-                </h2>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card shadow stat-card">
-                <h5>Ongoing</h5>
-                <h2>
-                    {% set ongoing = [] %}
-                    {% for p in projects %}
-                        {% if p.status == "Ongoing" %}
-                            {% set _ = ongoing.append(1) %}
-                        {% endif %}
-                    {% endfor %}
-                    {{ ongoing|length }}
-                </h2>
-            </div>
-        </div>
-
-
-        <div class="col-md-3 mb-3">
-
-            <div class="card shadow stat-card">
-
-                <h5>Completed</h5>
-
-                <h2>
-
-                    {% set completed = [] %}
-
-                    {% for p in projects %}
-                        {% if p.status == "Completed" %}
-                            {% set _ = completed.append(1) %}
-                        {% endif %}
-                    {% endfor %}
-
-                    {{ completed|length }}
-
-                </h2>
-
-            </div>
-
-        </div>
-
-    </div> -->
     <div class="row mb-4">
-  <div class="col-md-3 col-sm-6 mb-3">
-    <div class="card shadow text-center p-3">
-      <h6 class="text-muted">Total Projects</h6>
-      <h3 class="fw-bold">{{ total_projects }}</h3>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card shadow text-center p-3">
+            <h6 class="text-muted">Total Projects</h6>
+            <h3 class="fw-bold">{{ total_projects }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card shadow text-center p-3">
+            <h6 class="text-muted">Total Engineers</h6>
+            <h3 class="fw-bold">{{ engineer_count }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card shadow text-center p-3">
+            <h6 class="text-muted">Ongoing</h6>
+            <h3 class="fw-bold text-success">{{ ongoing_count }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card shadow text-center p-3">
+            <h6 class="text-muted">Completed</h6>
+            <h3 class="fw-bold text-primary">{{ completed_count }}</h3>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="col-md-3 col-sm-6 mb-3">
-    <div class="card shadow text-center p-3">
-      <h6 class="text-muted">Total Engineers</h6>
-      <h3 class="fw-bold">{{ projects|length }}</h3>
-    </div>
-  </div>
-  <div class="col-md-3 col-sm-6 mb-3">
-    <div class="card shadow text-center p-3">
-      <h6 class="text-muted">Ongoing</h6>
-      <h3 class="fw-bold text-success">{{ ongoing_count }}</h3>
-    </div>
-  </div>
-  <div class="col-md-3 col-sm-6 mb-3">
-    <div class="card shadow text-center p-3">
-      <h6 class="text-muted">Completed</h6>
-      <h3 class="fw-bold text-primary">{{ completed_count }}</h3>
-    </div>
-  </div>
-</div>
 
     <!-- Project Cards -->
     <div class="row">
-
-        <!-- {% for project in projects %}
-
-        <div class="col-md-4 mb-4">
-
-            <div class="card shadow p-4 project-card">
-
-                <h4>
-                    {{ project.project_name }}
-                </h4>
-
-                <p>
-
-                    <strong>
-                        Site Engineer:
-                    </strong>
-
-                    {{ project.assigned_engineer }}
-
-                </p>
-
-                <p>
-
-                    <strong>
-                        Status:
-                    </strong>
-
-                    {% if project.status ==
-                    "Ongoing" %}
-
-                    <span
-                    class="badge status-ongoing">
-
-                        Ongoing
-
-                    </span>
-
-                    {% else %}
-
-                    <span
-                    class="badge status-completed">
-
-                        Completed
-
-                    </span>
-
-                    {% endif %}
-
-                </p>
-
-                <a
-                    href="{{ url_for('project_page', project_name=project.project_name) }}"
-                    class="btn btn-primary rounded-pill">
-
-                    Open Project
-
-                </a>
-
-            </div>
-
-        </div>
-
-        {% endfor %} -->
-
         {% for project in projects %}
             <div class="col-md-4 col-sm-6 mb-4">
             <div class="card shadow p-4 project-card">
