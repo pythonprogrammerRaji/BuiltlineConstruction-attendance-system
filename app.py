@@ -343,8 +343,6 @@ def project_page(project_name):
     project=supabase.table("project_assignments").select("*").eq("project_name",project_name).execute() 
     tasks = supabase.table("task").select("*").eq("project_name", project_name).eq("is_deleted", False).execute()
     workers = supabase.table("workers").select("*").eq("project_name", project_name).eq("is_deleted", False).execute()
-#   tasks = supabase.table("task").select("*").eq("assigned_engineer", engineer_name).eq("project_name", project_name).eq("is_deleted", False).execute()
-
     
     attendance_map={}
 
@@ -353,9 +351,6 @@ def project_page(project_name):
         attendance_map[key] = item["value"]
 
     site_engineer=project.data[0]["assigned_engineer"]
-
-    # print("ATTENDANCE DATA:", attendance.data)
-    # print("ATTENDANCE MAP:", attendance_map)
 
     return render_template(
         "project_page.html",
@@ -452,7 +447,6 @@ def delete_worker(worker_id,project_name):
 
     supabase.table("attendance").delete().eq("worker_id",worker_id).execute()
     supabase.table("workers").update({"is_deleted": True}).eq("id", worker_id).execute()
-
     return redirect(f"/project/{project_name}")
 
 # Workers OT
@@ -514,7 +508,6 @@ import time
 
 @app.route("/save-attendance-checkin",methods=["POST"])
 def save_attendance_checkin():
-
     try:
         print("Route working")
         worker_name=request.form.get("worker_name")
@@ -522,26 +515,21 @@ def save_attendance_checkin():
         image=request.files.get("image")
         attendance_type=request.form.get("type")
         date=request.form.get("date")
-        current_time=request.form.get("time")
-        location=request.form.get("location")
+
 
         print(image)
         print(attendance_type)
         print(date)
-        print(current_time)
-        print(location)
 
         if image is None:
-            return jsonify({
-                "success":False,
-                "error":"No image received"
-            })
+            return jsonify({"success":False,"error":"No image received" })
         
         date = datetime.now().strftime("%Y-%m-%d") 
 
         filename=str(int(time.time()))+"_"+image.filename
 
         image_bytes=image.read()
+        # current_time = datetime.now().strftime("%I:%M:%S %p")
 
         upload=supabase.storage.from_("attendance-images").upload(
             path=filename,
@@ -562,8 +550,8 @@ def save_attendance_checkin():
             "type":attendance_type,
             "image_url":image_url,
             "date":date,
-            "time":current_time,
-            "location":location
+            # "time":current_time,
+            # "location":""
 
         }).execute()
 
@@ -574,13 +562,9 @@ def save_attendance_checkin():
         })
 
     except Exception as e:
-
         print("ERROR:",e)
 
-        return jsonify({
-            "success":False,
-            "error":str(e)
-        })
+        return jsonify({"success":False, "error":str(e) })
     
 @app.route("/assign-task", methods=["POST"])
 def assign_task():

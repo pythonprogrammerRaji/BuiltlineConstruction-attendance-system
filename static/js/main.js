@@ -180,128 +180,94 @@ calculateTotal(select);
 }
 
 document.addEventListener("DOMContentLoaded",function(){
+    const checkinBtn=document.getElementById("checkinBtn");
+    const checkoutBtn=document.getElementById("checkoutBtn");
+    const selfieInputGallery =document.getElementById("selfieInput");
+    const attendancePreview=document.getElementById("attendancePreview");
+    const statusText=document.getElementById("statusText");
+    const workerName=document.getElementById("workerName").value;
+    const projectName=document.getElementById("projectName").value;
 
-const checkinBtn=document.getElementById("checkinBtn");
-const checkoutBtn=document.getElementById("checkoutBtn");
-const selfieInput=document.getElementById("selfieInput");
-const attendancePreview=document.getElementById("attendancePreview");
-const statusText=document.getElementById("statusText");
-const workerName=document.getElementById("workerName").value;
-const projectName=document.getElementById("projectName").value;
+    let attendanceType="";
 
-let attendanceType="";
-let locationName="";
+    // navigator.geolocation.getCurrentPosition(
 
-navigator.geolocation.getCurrentPosition(
+    // function(position){
 
-function(position){
+    // fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`)
 
-fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`)
+    // .then(response=>response.json())
 
-.then(response=>response.json())
+    // .then(data=>{
 
-.then(data=>{
+    // locationName=
+    // data.address.suburb||
+    // data.address.city||
+    // data.address.town||
+    // data.address.village||
+    // "Unknown Location";
 
-locationName=
-data.address.suburb||
-data.address.city||
-data.address.town||
-data.address.village||
-"Unknown Location";
+    // });
 
-});
+    // },
 
-},
+    // function(){
 
-function(){
+    // locationName="Location not allowed";
 
-locationName="Location not allowed";
+    // }
 
-}
+    // );
 
-);
+    checkinBtn.onclick=function(){
+        attendanceType="Check In";
+        selfieInputGallery.click();
+    };
 
-checkinBtn.onclick=function(){
+    checkoutBtn.onclick=function(){
+        attendanceType="Check Out";
+        selfieInputGallery.click();
+    };
 
-attendanceType="Check In";
-selfieInput.click();
+    selfieInputGallery.onchange=function(){
+        const file=this.files[0];
 
-};
+        if(!file){
+        return;
+        }
 
-checkoutBtn.onclick=function(){
-
-attendanceType="Check Out";
-selfieInput.click();
-
-};
-
-selfieInput.onchange=function(){
-
-const file=this.files[0];
-
-if(!file){
-return;
-}
-
-const imageUrl=URL.createObjectURL(file);
-
-const currentDate=new Date().toLocaleDateString();
-
-const currentTime=new Date().toLocaleTimeString();
-
-const formData=new FormData()
-
-formData.append("image",file);
-formData.append("type",attendanceType);
-formData.append("date",currentDate);
-formData.append("time",currentTime);
-formData.append("location",locationName);
-formData.append("worker_name",workerName);
-formData.append("project_name",projectName);
+    const imageUrl=URL.createObjectURL(file);
+    const currentDate=new Date().toLocaleDateString();
+    
+    const formData=new FormData()
+    formData.append("image",file);
+    formData.append("type",attendanceType);
+    formData.append("date",currentDate);
+    formData.append("worker_name",workerName);
+    formData.append("project_name",projectName);
 
 
-const card=`
+    const card=`
+        <div class="card p-3 mb-3">
+            <img src="${imageUrl}" style="width:200px;border-radius:10px;" class="mb-2">
+            <h5>${attendanceType}</h5>
+            <p><strong>Date:</strong>${currentDate}</p>
+        </div>
 
-<div class="card p-3 mb-3">
+    `;
 
-<img src="${imageUrl}"
-style="width:200px;border-radius:10px;"
-class="mb-2">
+    attendancePreview.innerHTML=card;
 
-<h5>${attendanceType}</h5>
+    fetch("/save-attendance-checkin",{
+        method:"POST",
+        body:formData
+    })
+    .then(response=>response.json())
+    .then(data=>{
+        statusText.innerText=attendanceType+" Successful";
+    });
 
-<p><strong>Date:</strong>
-${currentDate}</p>
-
-<p><strong>Time:</strong>
-${currentTime}</p>
-
-<p><strong>Location:</strong>
-${locationName}</p>
-
-</div>
-
-`;
-
-attendancePreview.innerHTML=card;
-
-fetch("/save-attendance-checkin",{
-
-method:"POST",
-body:formData
-
-})
-
-.then(response=>response.json())
-
-.then(data=>{
-
-statusText.innerText=
-attendanceType+" Successful";
-
-});
-
-};
+    };
 
 });
 
