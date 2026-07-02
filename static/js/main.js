@@ -182,7 +182,7 @@ calculateTotal(select);
 document.addEventListener("DOMContentLoaded",function(){
     const checkinBtn=document.getElementById("checkinBtn");
     const checkoutBtn=document.getElementById("checkoutBtn");
-    const selfieInputGallery =document.getElementById("selfieInput");
+    const selfieInputGallery =document.getElementById("selfieInputGallery");
     const attendancePreview=document.getElementById("attendancePreview");
     const statusText=document.getElementById("statusText");
     const workerName=document.getElementById("workerName").value;
