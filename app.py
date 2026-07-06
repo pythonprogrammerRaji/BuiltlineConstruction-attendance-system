@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, jsonify, session
+from flask import Flask, render_template, request, redirect, jsonify, session, flash
 from datetime import datetime, timedelta, date
 from openpyxl import Workbook
 import time
@@ -205,12 +205,16 @@ def history():
         .select("*")\
         .execute()
 
-    return render_template(
-        "history.html",
-        attendance = attendance.data,
-        past_tasks = past_tasks.data,
-        history    = history.data
-    )
+    try:
+        return render_template(
+            "history.html",
+            attendance = attendance.data,
+            past_tasks = past_tasks.data,
+            history    = history.data
+        )
+    except Exception as e:
+        print("HISTORY ERROR:", str(e))
+        return redirect("/admin-dashboard")
 
 @app.route("/photos")
 def photos():
@@ -1374,7 +1378,49 @@ def do_attendance_reset():
     except Exception as e:
         print("RESET ERROR:", str(e))
 
+#delete the history stored attendance card
+@app.route("/delete-history", methods=["POST"])
+def delete_history():
 
+    # get list of selected record ids from the form
+    # getlist gets all checked checkboxes values at once
+    selected_ids = request.form.getlist("selected_ids")
+
+    if not selected_ids:
+        flash("No records selected.", "warning")
+        return redirect("/history")
+
+    for record_id in selected_ids:
+
+        # first get the record to find the excel file url
+        record = supabase.table("attendance_history")\
+            .select("*")\
+            .eq("id", record_id)\
+            .execute()
+
+        if record.data:
+            file_url = record.data[0].get("file_name", "")
+
+            # delete the excel file from Supabase Storage too
+            # so it does not waste storage space
+            if "supabase" in file_url:
+                try:
+                    # extract just the file path from the full URL
+                    storage_path = file_url.split("/object/public/attendance-images/")[-1]
+                    supabase.storage.from_("attendance-images")\
+                        .remove([storage_path])
+                except Exception as e:
+                    print("DELETE ERROR:", str(e))
+                    return redirect("/history")
+
+        # delete the record from database
+        supabase.table("attendance_history")\
+            .delete()\
+            .eq("id", record_id)\
+            .execute()
+
+    flash("Selected records deleted.", "success")
+    return redirect("/history")
 
 # this route now responds to a quiet background fetch() call,
 # not a full page form submission — so we return a simple JSON

@@ -87,7 +87,7 @@
 
         </div>
 
-        <div class="container mt-4">
+        <!-- <div class="container mt-4">
             <h2>Attendance History</h2>
             <div class="row">
                 {% for item in history %}
@@ -103,7 +103,62 @@
                 </div>
                 {% endfor %}
             </div>
+        </div> -->
+
+        <div class="container mt-4">
+    <h2>Attendance History</h2>
+
+    <form method="POST" action="/delete-history" id="delete-history-form">
+
+        <!-- single delete button at top -->
+        <div class="d-flex justify-content-end mb-3">
+            <button type="submit"
+                    class="btn btn-danger btn-sm"
+                    onclick="return confirmDelete()">
+                <i class="bi bi-trash"></i> Delete Selected
+            </button>
         </div>
+
+        <div class="row">
+            {% for item in history %}
+            <div class="col-md-4 mb-4">
+                <div class="card p-3 shadow">
+
+                    <!-- checkbox on each card -->
+                    <div class="form-check mb-2">
+                        <input class="form-check-input history-checkbox"
+                               type="checkbox"
+                               name="selected_ids"
+                               value="{{ item.id }}">
+                        <label class="form-check-label"
+                               style="font-size:12px;color:#888;">
+                            Select to delete
+                        </label>
+                    </div>
+
+                    <h4>{{ item.project_name }}</h4>
+                    <p><strong>Engineer:</strong> {{ item.assigned_engineer }}</p>
+                    <p><strong>Week:</strong> {{ item.week_name }}</p>
+                    <a href="{{ item.file_name }}"
+                       target="_blank"
+                       class="btn btn-sm btn-primary w-100">
+                        <i class="bi bi-download"></i> Download Excel
+                    </a>
+
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </form>
+
+    {% if not history %}
+    <p class="text-muted text-center">No history yet.</p>
+    {% endif %}
+
+</div>
+
+        
 
     </section>
 
