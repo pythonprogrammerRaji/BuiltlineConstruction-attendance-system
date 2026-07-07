@@ -593,47 +593,6 @@ def assign_task():
 
     return redirect("/admin-dashboard")
 
-# @app.route("/update-task", methods=["POST"])
-# def update_task():
-
-#     data         = request.get_json()
-#     task_id      = data.get("task_id")
-#     is_completed = data.get("is_completed")
-
-#     # update this task status
-#     supabase.table("task").update({
-#         "is_completed": is_completed
-#     }).eq("id", task_id).execute()
-
-#     # get the project name of this task
-#     current_task = supabase.table("task")\
-#         .select("*")\
-#         .eq("id", task_id)\
-#         .execute()
-
-#     project_name      = current_task.data[0]["project_name"]
-#     assigned_engineer = current_task.data[0]["assigned_engineer"]
-
-#     # get all tasks for this engineer in this project
-#     all_tasks = supabase.table("task")\
-#         .select("*")\
-#         .eq("project_name", project_name)\
-#         .eq("assigned_engineer", assigned_engineer)\
-#         .execute()
-
-#     total     = len(all_tasks.data)
-#     completed = len([t for t in all_tasks.data if t["is_completed"]])
-
-#     if total > 0:
-#         progress = round((completed / total) * 100)
-#     else:
-#         progress = 0
-
-#     return jsonify({
-#         "progress":  progress,
-#         "completed": completed,
-#         "total":     total
-#     })
 
 @app.route("/update-task", methods=["POST"])
 def update_task():
@@ -963,7 +922,8 @@ from flask import send_file
 
 # Attendance reset
 from datetime import datetime
-import io   # needed for in-memory Excel file handling
+import io   
+# needed for in-memory Excel file handling
 
 # @app.route("/restart-attendance")
 # def restart_attendance():
@@ -1421,6 +1381,46 @@ def delete_history():
 
     flash("Selected records deleted.", "success")
     return redirect("/history")
+
+
+@app.route("/delete-checkin-history", methods=["POST"])
+def delete_checkin_history():
+
+    selected_ids = request.form.getlist("selected_ids")
+
+    if not selected_ids:
+        flash("No records selected.", "warning")
+        return redirect("/history")
+
+    for record_id in selected_ids:
+
+        # get record to find image url
+        record = supabase.table("attendance_checkin")\
+            .select("*")\
+            .eq("id", record_id)\
+            .execute()
+
+        if record.data:
+            image_url = record.data[0].get("image_url", "")
+
+            # delete image from Supabase Storage
+            if image_url and "supabase" in image_url:
+                try:
+                    filename = image_url.split("/")[-1]
+                    supabase.storage.from_("attendance-images")\
+                        .remove([filename])
+                except Exception as e:
+                    print("STORAGE DELETE ERROR:", str(e))
+
+        # delete record from database
+        supabase.table("attendance_checkin")\
+            .delete()\
+            .eq("id", record_id)\
+            .execute()
+
+    flash("Selected records deleted.", "success")
+    return redirect("/history")
+
 
 # this route now responds to a quiet background fetch() call,
 # not a full page form submission — so we return a simple JSON
