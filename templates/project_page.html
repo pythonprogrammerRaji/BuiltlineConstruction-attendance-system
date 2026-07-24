@@ -63,7 +63,11 @@
             border:1px solid #333;
             color: #000;
             box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+            font-weight: bold;
 
+        }
+        table td, .form-control, .form-select{
+            font-weight: bold;
         }
 
         .add-btn{
@@ -82,6 +86,7 @@
             align-items: center;
             padding: 10px 0;
             border-bottom: 1px solid #f0f0f0;
+            font-weight: bold;
         }
 
         .ot-record-date {
@@ -177,8 +182,8 @@
                             <td>
                                 <!-- dropdown to pick worker type, auto-saves on change -->
                                 <form method="POST" action="/update-worker-type" id="type-form-{{ worker.id }}">
-                                    <input type="hidden" name="worker_id"    value="{{ worker.id }}">
-                                    <input type="hidden" name="project_name" value="{{ project_name }}">
+                                    <input type="hidden" name="worker_id"    value="{{ worker.id }}" class="form-control">
+                                    <input type="hidden" name="project_name" value="{{ project_name }}" class="form-control">
 
                                     <select name="worker_type"
                                             class="form-select form-select-sm"
