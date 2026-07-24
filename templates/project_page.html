@@ -167,9 +167,8 @@
                             <th>Fri</th>
                             <th>Sat</th>
                             <th>Sun</th>
-
                             <th>Total Day</th>
-
+                            <th>Total Amount</th>
                             <th>Action</th>
 
                         </tr>
@@ -211,6 +210,7 @@
                            <td>
                             <input type="number"
                                     name="salary"
+                                    id="salary-{{ worker.id }}"
                                     value="{{ worker.salary or 0 }}"
                                     class="form-control form-control-sm"
                                     style="width:90px;"
@@ -302,7 +302,10 @@
                                 </select>
 
                             </td>
-                            <td class="total-days">0</td>
+                            <td class="total-days"  id="total-days-{{ worker.id }}">0</td>
+                            <td id="sal-total-{{ worker.id }}" style="font-weight:700;color:#000;">
+                                {{ worker.total_amount }}
+                            </td>
                             <td class="d-flex align-item-center gap-3">
                                 <a href="/delete-worker/{{worker.id}}/{{project_name}}" class="btn btn-danger btn-sm" onclick="return confirm('Delete Worker?')"><i class="bi bi-trash"></i></a>
                                  <button type="button" class="btn btn-sm btn-warning" onclick="openOTPopup('{{ worker.id }}', '{{ worker.name }}', '{{ project_name }}')">OT</button>
@@ -500,10 +503,7 @@
 
 
 <script>
- // called automatically the moment the worker name input loses focus
-// (user clicks somewhere else on the page, or presses Tab)
-// no Save button needed — this fires by itself
-// fires on EVERY keystroke while typing — purely visual, no database call
+
 // this keeps typing fast and responsive since it never waits on the network
 function updateHeadingLive(workerId, currentText) {
 
@@ -516,8 +516,58 @@ function updateHeadingLive(workerId, currentText) {
 }
  
 
+
+// function calcWorkerSalary(workerId) {
+
+//     const salInput  = document.getElementById("salary-" + workerId);
+//     const totalCell = document.getElementById("total-days-" + workerId);
+//     const totalAmountCell = document.getElementById("sal-total-" + workerId);
+
+//     console.log("=== calcWorkerSalary ===");
+//     console.log("workerId:", workerId);
+//     console.log("salInput found:", salInput);
+//     console.log("totalCell found:", totalCell);
+
+//     if (salInput)  console.log("salary value:", salInput.value);
+//     if (totalCell) console.log("total days text:", totalCell.textContent);
+
+//     const salary   = salInput  ? parseFloat(salInput.value)  || 0 : 0;
+//     const daysText = totalCell ? totalCell.textContent.trim() : "0";
+//     const days     = parseFloat(daysText.replace("d", "").trim()) || 0;
+//     const total    = salary * days;
+
+//     console.log("salary:", salary);
+//     console.log("days:", days);
+//     console.log("total:", total);
+
+//     if (totalAmountCell) {
+//         totalAmountCell.textContent = "₹" + total.toLocaleString("en-IN");
+//     }
+// }
+
+// // run for every worker when page loads
+// document.addEventListener("DOMContentLoaded", function() {
+//     document.querySelectorAll(".att-worker-row").forEach(function(row) {
+//         const workerId = row.dataset.workerId;
+//         if (workerId) {
+//             calcWorkerSalary(workerId);
+//         }
+//     });
+// });
+
+
+function calcWorkerSalary(workerId) {
+    const salary = document.getElementById(`salary-${workerId}`).value || 0;
+    const totalDays = document.getElementById(`total-days-${workerId}`).textContent || 0;
+
+    const totalAmount = salary * totalDays;
+
+    document.getElementById(`sal-total-${workerId}`).textContent = `₹${totalAmount}`;
+}
+
 // fires only ONCE, when the engineer taps away from the input
 // this is the one that actually talks to Flask and saves to Supabase
+
 function autoSaveWorkerName(workerId, projectName, newName) {
 
     const formData = new FormData();
@@ -545,7 +595,32 @@ function autoSaveSalary(workerId, projectName, newSalary) {
         method: "POST",
         body: formData
     });
+    calcWorkerSalary(workerId);
 }
+
+
+// function saveAttendance(select,day,workerId,workerName){
+//     calculateTotal(select);
+//     const projectName =
+//         document.getElementById("projectName").value;
+
+//     fetch("/save-attendance",{
+//         method:"POST",
+//         headers:{
+//             "Content-Type":"application/x-www-form-urlencoded"
+//         },
+//         body:"worker_id="+workerId+
+//             "&worker_name="+encodeURIComponent(workerName)+
+//             "&project_name="+encodeURIComponent(projectName)+
+//             "&day_name="+day+
+//             "&value="+select.value
+//         })
+
+//     .then(res=>res.json())
+//     .then(data=>{console.log(data); calcWorkerSalary(workerId);});
+
+// }
+
 </script>
 
 <script>
@@ -734,6 +809,7 @@ function editWorkerName(workerId) {
 selfieInputGallery.onchange = function(){
     handlePickedFile(this.files[0]);
 };
+
 </script>
 
 <script src="{{url_for('static',filename='js/main.js')}}"></script>

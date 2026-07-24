@@ -126,14 +126,52 @@ function showSection(section){
 
 }
 
-    function calculateTotal(select){
+function calculateTotal(select){
         let row=select.closest("tr");
         let selects=row.querySelectorAll(".attendance-select");
         let total=0;
         selects.forEach(item=>{total+=parseFloat(item.value)||0;});
         row.querySelector(".total-days").innerText=total;
+}
+
+
+
+function calculateTotal(select){
+    let row=select.closest("tr");
+    let selects=row.querySelectorAll(".attendance-select");
+    let total=0;
+
+    selects.forEach(item=>{
+        if(item.value=="1d")total+=1;
+        if(item.value=="0.5d")total+=0.5;
+        if(item.value=="1.5d")total+=1.5;
+        if(item.value=="2d")total+=2;
+        if(item.value=="2.5d")total+=2.5;
+    });
+
+    row.querySelector(".total-days").innerText=total+" d";
+      let salary = parseFloat(row.querySelector('input[name="salary"]').value) || 0;
+    // Total Amount
+    let amount = salary * total;
+    row.querySelector('[id^="sal-total-"]').innerText = "₹" + amount;
     }
 
+    window.onload=function(){
+        document.querySelectorAll(".attendance-select").forEach(select=>{
+        calculateTotal(select);
+    });
+}
+
+function calcWorkerSalary(workerId){
+    let salary = parseFloat(document.getElementById("salary-" + workerId).value) || 0;
+
+    let total = parseFloat(
+        document.getElementById("total-days-" + workerId).innerText
+    ) || 0;
+
+    document.getElementById("sal-total-" + workerId).innerText =
+        "₹" + (salary * total);
+}
 
 function saveAttendance(select,day,workerId,workerName){
 calculateTotal(select);
@@ -154,30 +192,10 @@ fetch("/save-attendance",{
 
 
 .then(res=>res.json())
-.then(data=>console.log(data));
+.then(data=>{console.log(data); calcWorkerSalary(workerId)});
+
 }
 
-function calculateTotal(select){
-let row=select.closest("tr");
-let selects=row.querySelectorAll(".attendance-select");
-let total=0;
-
-selects.forEach(item=>{
-if(item.value=="1d")total+=1;
-if(item.value=="0.5d")total+=0.5;
-if(item.value=="1.5d")total+=1.5;
-if(item.value=="2d")total+=2;
-if(item.value=="2.5d")total+=2.5;
-});
-
-row.querySelector(".total-days").innerText=total+" d";
-}
-
-window.onload=function(){
-document.querySelectorAll(".attendance-select").forEach(select=>{
-calculateTotal(select);
-});
-}
 
 document.addEventListener("DOMContentLoaded",function(){
     const checkinBtn=document.getElementById("checkinBtn");
