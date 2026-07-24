@@ -10,8 +10,8 @@
     <style>
 
         body{
-            background:#111;
-            color:white;
+            background:#fff;
+            color:#000;
         }
         /* widened dropdown so values like "1.5d" are not cut off */
         .attendance-select{
@@ -23,15 +23,16 @@
         }
 
         .top-header{
-            background:#1c1c1c;
+            background:#fff;
             padding:15px 20px;
             border-bottom:1px solid #333;
+            color: #000;
         }
 
         .back-btn{
             border:none;
             background:none;
-            color:white;
+            color:#000;
             font-size:20px;
         }
 
@@ -43,8 +44,8 @@
         .tab-btn{
             width:100%;
             border:1px solid #555;
-            background:#1c1c1c;
-            color:white;
+            background:#fff;
+            color:#000;
             padding:14px;
             border-radius:10px;
             transition:0.3s;
@@ -52,13 +53,17 @@
 
         .tab-btn:hover{
             background:#2b2b2b;
+             color:#fff;
         }
 
         .section-card{
-            background:#1c1c1c;
+            background:#fff;
             border-radius:15px;
             padding:20px;
             border:1px solid #333;
+            color: #000;
+            box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
+
         }
 
         .add-btn{
@@ -118,7 +123,6 @@
         <!-- Tabs -->
         <div class="row mb-4">
             <div class="col-md-4 mb-2">
-
                 <button class="tab-btn" onclick="showSection('attendance')">👷 Attendance </button> 
             </div>
 
@@ -144,7 +148,7 @@
 
             <div class="table-responsive">
 
-                <table  class="table table-dark table-bordered align-middle text-center">
+                <table  class="table table-bordered align-middle text-center">
 
                     <thead>
                         <tr>
@@ -411,7 +415,7 @@
                         {% endfor %}
 
                         {% if tasks|length == 0 %}
-                        <p class="text-white" style="font-size:13px;">
+                        <p style="font-size:13px;">
                         No tasks assigned yet. Contact your admin.
                         </p>
                         {% endif %}
@@ -486,7 +490,7 @@
             </div>
             </div>
 
-
+</body>
 
 
 
