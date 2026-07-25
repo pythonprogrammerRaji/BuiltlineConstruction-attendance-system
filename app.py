@@ -385,9 +385,18 @@ def add_worker():
     worker_name = request.form.get("worker_name")
     project_name = request.form.get("project_name")
 
+    worker_type  = request.form.get("worker_type", "")
+
+    if not worker_name:
+        flash("Worker name cannot be empty.", "danger")
+        return redirect(f"/project/{project_name}")
+
     supabase.table("workers").insert({
         "name": worker_name,
-        "project_name": project_name
+        "project_name": project_name,
+        "worker_type":  worker_type,
+        "is_active":    True,
+        "is_deleted":   False
     }).execute()
 
     return redirect(f"/project/{project_name}")
