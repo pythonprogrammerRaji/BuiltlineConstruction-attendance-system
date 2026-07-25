@@ -144,220 +144,220 @@
         <!-- Attendance Section -->
         <div id="attendanceSection">
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4> Worker Attendance</h4>
-            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#workerModal"> + Add Worke </button>
-        </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4> Worker Attendance</h4>
+                <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#workerModal"> + Add Worke </button>
+            </div>
 
-        <div class="section-card">
+            <div class="section-card">
 
-            <div class="table-responsive">
+                <div class="table-responsive">
 
-                <table  class="table table-bordered align-middle text-center">
+                    <table  class="table table-bordered align-middle text-center">
 
-                    <thead>
-                        <tr>
-                            <th>Type</th>
-                            <th>Worker Name</th>
-                            <th>Salary</th> 
-                            <th>Mon</th>
-                            <th>Tue</th>
-                            <th>Wed</th>
-                            <th>Thu</th>
-                            <th>Fri</th>
-                            <th>Sat</th>
-                            <th>Sun</th>
-                            <th>Total Day</th>
-                            <th>Total Amount</th>
-                            <th>Action</th>
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Worker Name</th>
+                                <th>Salary</th> 
+                                <th>Mon</th>
+                                <th>Tue</th>
+                                <th>Wed</th>
+                                <th>Thu</th>
+                                <th>Fri</th>
+                                <th>Sat</th>
+                                <th>Sun</th>
+                                <th>Total Day</th>
+                                <th>Total Amount</th>
+                                <th>Action</th>
 
-                        </tr>
+                            </tr>
 
-                    </thead>
+                        </thead>
 
-                    <tbody>
-                        {% for worker in workers %}
-                        <tr>
+                        <tbody>
+                            {% for worker in workers %}
+                            <tr>
+                                <td>
+                                    <!-- dropdown to pick worker type, auto-saves on change -->
+                                    <!-- <form method="POST" action="/update-worker-type" id="type-form-{{ worker.id }}">
+
+                                        <input type="hidden" name="worker_id"    value="{{ worker.id }}" class="form-control">
+                                        <input type="hidden" name="project_name" value="{{ project_name }}" class="form-control">
+
+                                        <select name="worker_type"
+                                                class="form-select form-select-sm"
+                                                style="min-width:100px;"
+                                                onchange="document.getElementById('type-form-{{ worker.id }}').submit()">
+                                        <option value="Helper"  {% if worker.worker_type == "Helper"  %}selected{% endif %}>Helper</option>
+                                        <option value="Meshan"  {% if worker.worker_type == "Meshan"  %}selected{% endif %}>Meshan</option>
+                                        <option value="Shuttering" {% if worker.worker_type == "Shuttering" %}selected{% endif %}>Shuttering</option>
+                                        <option value="Barbender" {% if worker.worker_type == "Barbender" %}selected{% endif %}>Barbender</option>
+                                        </select>
+                                    </form> -->
+
+                                     <span style="cursor:pointer;font-size:13px;font-weight:500;color:#1a1a1a;"
+                                            onclick="openTypePopup('{{ worker.id }}', '{{ worker.worker_type }}')"
+                                            id="type-label-{{ worker.id }}">
+                                            {{ worker.worker_type or '-- Select --' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <p class="worker-heading" id="worker-heading-{{ worker.id }}">{{ worker.name }}</p>
+
+                                    <input type="text"
+                                        name="worker_name"
+                                        id="worker-input-{{ worker.id }}"
+                                        value="{{ worker.name }}"
+                                        class="form-control form-control-sm"
+                                        style="width:120px;"
+                                        oninput="updateHeadingLive('{{ worker.id }}', this.value)"
+                                        onblur="autoSaveWorkerName('{{ worker.id }}', '{{ project_name }}', this.value)">
+                                </td>
                             <td>
-                                <!-- dropdown to pick worker type, auto-saves on change -->
-                                <form method="POST" action="/update-worker-type" id="type-form-{{ worker.id }}">
-                                    <input type="hidden" name="worker_id"    value="{{ worker.id }}" class="form-control">
-                                    <input type="hidden" name="project_name" value="{{ project_name }}" class="form-control">
-
-                                    <select name="worker_type"
-                                            class="form-select form-select-sm"
-                                            style="min-width:100px;"
-                                            onchange="document.getElementById('type-form-{{ worker.id }}').submit()">
-                                    <option value="Helper"  {% if worker.worker_type == "Helper"  %}selected{% endif %}>Helper</option>
-                                    <option value="Meshan"  {% if worker.worker_type == "Meshan"  %}selected{% endif %}>Meshan</option>
-                                    <option value="Shuttering" {% if worker.worker_type == "Shuttering" %}selected{% endif %}>Shuttering</option>
-                                    <option value="Barbender" {% if worker.worker_type == "Barbender" %}selected{% endif %}>Barbender</option>
+                                <input type="number"
+                                        name="salary"
+                                        id="salary-{{ worker.id }}"
+                                        value="{{ worker.salary or 0 }}"
+                                        class="form-control form-control-sm"
+                                        style="width:90px;"
+                                        onblur="autoSaveSalary('{{ worker.id }}', '{{ project_name }}', this.value)">
+                                </td>
+                                <td>
+                                    <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Mon','{{worker.id}}','{{worker.name}}')">
+                                        <option value="0">--</option>
+                                        <option value="1d" {% if attendance_map.get(worker.id ~ '_Mon')=='1d' %}selected{% endif %}>1d</option>
+                                        <option value="0.5d" {% if attendance_map.get(worker.id ~ '_Mon')=='0.5d' %}selected{% endif %}>0.5d</option>
+                                        <option value="1.5d" {% if attendance_map.get(worker.id ~ '_Mon')=='1.5d' %}selected{% endif %}>1.5d</option>
+                                        <option value="2d" {% if attendance_map.get(worker.id ~ '_Mon')=='2d' %}selected{% endif %}>2d</option>
+                                        <option value="2.5d" {% if attendance_map.get(worker.id ~ '_Mon')=='2.5d' %}selected{% endif %}>2.5d</option>
+                                        <option value="absent" {% if attendance_map.get(worker.id ~ '_Mon')=='absent' %}selected{% endif %}>Absent</option>
+                                        <option value="leave" {% if attendance_map.get(worker.id ~ '_Mon')=='leave' %}selected{% endif %}>OtherSite</option>
                                     </select>
-                                </form>
-                            </td>
-                            <td>
-                                <p class="worker-heading" id="worker-heading-{{ worker.id }}">{{ worker.name }}</p>
+                                </td>
+                                <td>
+                                    <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Tue','{{worker.id}}','{{worker.name}}')">
+                                        <option value="0">--</option>
+                                        <option value="1d" {% if attendance_map.get(worker.id ~ '_Tue')=='1d' %}selected{% endif %}>1d</option>
+                                        <option value="0.5d" {% if attendance_map.get(worker.id ~ '_Tue')=='0.5d' %}selected{% endif %}>0.5d</option>
+                                        <option value="1.5d" {% if attendance_map.get(worker.id ~ '_Tue')=='1.5d' %}selected{% endif %}>1.5d</option>
+                                        <option value="2d" {% if attendance_map.get(worker.id ~ '_Tue')=='2d' %}selected{% endif %}>2d</option>
+                                        <option value="2.5d" {% if attendance_map.get(worker.id ~ '_Tue')=='2.5d' %}selected{% endif %}>2.5d</option>
+                                        <option value="absent" {% if attendance_map.get(worker.id ~ '_Tue')=='absent' %}selected{% endif %}>Absent</option>
+                                        <option value="leave" {% if attendance_map.get(worker.id ~ '_Tue')=='leave' %}selected{% endif %}>OtherSite</option>
+                                    </select>
 
-                                <input type="text"
-                                    name="worker_name"
-                                    id="worker-input-{{ worker.id }}"
-                                    value="{{ worker.name }}"
-                                    class="form-control form-control-sm"
-                                    style="width:120px;"
-                                    oninput="updateHeadingLive('{{ worker.id }}', this.value)"
-                                    onblur="autoSaveWorkerName('{{ worker.id }}', '{{ project_name }}', this.value)">
-                            </td>
-                           <td>
-                            <input type="number"
-                                    name="salary"
-                                    id="salary-{{ worker.id }}"
-                                    value="{{ worker.salary or 0 }}"
-                                    class="form-control form-control-sm"
-                                    style="width:90px;"
-                                    onblur="autoSaveSalary('{{ worker.id }}', '{{ project_name }}', this.value)">
-                            </td>
-                            <td>
-                                <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Mon','{{worker.id}}','{{worker.name}}')">
-                                    <option value="0">--</option>
-                                    <option value="1d" {% if attendance_map.get(worker.id ~ '_Mon')=='1d' %}selected{% endif %}>1d</option>
-                                    <option value="0.5d" {% if attendance_map.get(worker.id ~ '_Mon')=='0.5d' %}selected{% endif %}>0.5d</option>
-                                    <option value="1.5d" {% if attendance_map.get(worker.id ~ '_Mon')=='1.5d' %}selected{% endif %}>1.5d</option>
-                                    <option value="2d" {% if attendance_map.get(worker.id ~ '_Mon')=='2d' %}selected{% endif %}>2d</option>
-                                    <option value="2.5d" {% if attendance_map.get(worker.id ~ '_Mon')=='2.5d' %}selected{% endif %}>2.5d</option>
-                                    <option value="absent" {% if attendance_map.get(worker.id ~ '_Mon')=='absent' %}selected{% endif %}>Absent</option>
-                                    <option value="leave" {% if attendance_map.get(worker.id ~ '_Mon')=='leave' %}selected{% endif %}>OtherSite</option>
-                                </select>
-                            </td>
-                            <td>
-                                <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Tue','{{worker.id}}','{{worker.name}}')">
-                                    <option value="0">--</option>
-                                    <option value="1d" {% if attendance_map.get(worker.id ~ '_Tue')=='1d' %}selected{% endif %}>1d</option>
-                                    <option value="0.5d" {% if attendance_map.get(worker.id ~ '_Tue')=='0.5d' %}selected{% endif %}>0.5d</option>
-                                    <option value="1.5d" {% if attendance_map.get(worker.id ~ '_Tue')=='1.5d' %}selected{% endif %}>1.5d</option>
-                                    <option value="2d" {% if attendance_map.get(worker.id ~ '_Tue')=='2d' %}selected{% endif %}>2d</option>
-                                    <option value="2.5d" {% if attendance_map.get(worker.id ~ '_Tue')=='2.5d' %}selected{% endif %}>2.5d</option>
-                                    <option value="absent" {% if attendance_map.get(worker.id ~ '_Tue')=='absent' %}selected{% endif %}>Absent</option>
-                                    <option value="leave" {% if attendance_map.get(worker.id ~ '_Tue')=='leave' %}selected{% endif %}>OtherSite</option>
-                                </select>
+                                </td>
+                                <td>
+                                    <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Wed','{{worker.id}}','{{worker.name}}')">
+                                        <option value="0">--</option>
+                                        <option value="1d" {% if attendance_map.get(worker.id ~ '_Wed')=='1d' %}selected{% endif %}>1d</option>
+                                        <option value="0.5d" {% if attendance_map.get(worker.id ~ '_Wed')=='0.5d' %}selected{% endif %}>0.5d</option>
+                                        <option value="1.5d" {% if attendance_map.get(worker.id ~ '_Wed')=='1.5d' %}selected{% endif %}>1.5d</option>
+                                        <option value="2d" {% if attendance_map.get(worker.id ~ '_Wed')=='2d' %}selected{% endif %}>2d</option>
+                                        <option value="2.5d" {% if attendance_map.get(worker.id ~ '_Wed')=='2.5d' %}selected{% endif %}>2.5d</option>
+                                        <option value="absent" {% if attendance_map.get(worker.id ~ '_Wed')=='absent' %}selected{% endif %}>Absent</option>
+                                        <option value="leave" {% if attendance_map.get(worker.id ~ '_Wed')=='leave' %}selected{% endif %}>OtherSite</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Thu','{{worker.id}}','{{worker.name}}')">
+                                        <option value="0">--</option>
+                                        <option value="1d" {% if attendance_map.get(worker.id ~ '_Thu')=='1d' %}selected{% endif %}>1d</option>
+                                        <option value="0.5d" {% if attendance_map.get(worker.id ~ '_Thu')=='0.5d' %}selected{% endif %}>0.5d</option>
+                                        <option value="1.5d" {% if attendance_map.get(worker.id ~ '_Thu')=='1.5d' %}selected{% endif %}>1.5d</option>
+                                        <option value="2d" {% if attendance_map.get(worker.id ~ '_Thu')=='2d' %}selected{% endif %}>2d</option>
+                                        <option value="2.5d" {% if attendance_map.get(worker.id ~ '_Thu')=='2.5d' %}selected{% endif %}>2.5d</option>
+                                        <option value="absent" {% if attendance_map.get(worker.id ~ '_Thu')=='absent' %}selected{% endif %}>Absent</option>
+                                        <option value="leave" {% if attendance_map.get(worker.id ~ '_Thu')=='leave' %}selected{% endif %}>OtherSite</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Fri','{{worker.id}}','{{worker.name}}')">
+                                        <option value="0">--</option>
+                                        <option value="1d" {% if attendance_map.get(worker.id ~ '_Fri')=='1d' %}selected{% endif %}>1d</option>
+                                        <option value="0.5d" {% if attendance_map.get(worker.id ~ '_Fri')=='0.5d' %}selected{% endif %}>0.5d</option>
+                                        <option value="1.5d" {% if attendance_map.get(worker.id ~ '_Fri')=='1.5d' %}selected{% endif %}>1.5d</option>
+                                        <option value="2d" {% if attendance_map.get(worker.id ~ '_Fri')=='2d' %}selected{% endif %}>2d</option>
+                                        <option value="2.5d" {% if attendance_map.get(worker.id ~ '_Fri')=='2.5d' %}selected{% endif %}>2.5d</option>
+                                        <option value="absent" {% if attendance_map.get(worker.id ~ '_Fri')=='absent' %}selected{% endif %}>Absent</option>
+                                        <option value="leave" {% if attendance_map.get(worker.id ~ '_Fri')=='leave' %}selected{% endif %}>OtherSite</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Sat','{{worker.id}}','{{worker.name}}')">
+                                        <option value="0">--</option>
+                                        <option value="1d" {% if attendance_map.get(worker.id ~ '_Sat')=='1d' %}selected{% endif %}>1d</option>
+                                        <option value="0.5d" {% if attendance_map.get(worker.id ~ '_Sat')=='0.5d' %}selected{% endif %}>0.5d</option>
+                                        <option value="1.5d" {% if attendance_map.get(worker.id ~ '_Sat')=='1.5d' %}selected{% endif %}>1.5d</option>
+                                        <option value="2d" {% if attendance_map.get(worker.id ~ '_Sat')=='2d' %}selected{% endif %}>2d</option>
+                                        <option value="2.5d" {% if attendance_map.get(worker.id ~ '_Sat')=='2.5d' %}selected{% endif %}>2.5d</option>
+                                        <option value="absent" {% if attendance_map.get(worker.id ~ '_Sat')=='absent' %}selected{% endif %}>Absent</option>
+                                        <option value="leave" {% if attendance_map.get(worker.id ~ '_Sat')=='leave' %}selected{% endif %}>OtherSite</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Sun','{{worker.id}}','{{worker.name}}')">
+                                        <option value="0">--</option>
+                                        <option value="1d" {% if attendance_map.get(worker.id ~ '_Sun')=='1d' %}selected{% endif %}>1d</option>
+                                        <option value="0.5d" {% if attendance_map.get(worker.id ~ '_Sun')=='0.5d' %}selected{% endif %}>0.5d</option>
+                                        <option value="1.5d" {% if attendance_map.get(worker.id ~ '_Sun')=='1.5d' %}selected{% endif %}>1.5d</option>
+                                        <option value="2d" {% if attendance_map.get(worker.id ~ '_Sun')=='2d' %}selected{% endif %}>2d</option>
+                                        <option value="2.5d" {% if attendance_map.get(worker.id ~ '_Sun')=='2.5d' %}selected{% endif %}>2.5d</option>
+                                        <option value="absent" {% if attendance_map.get(worker.id ~ '_Sun')=='absent' %}selected{% endif %}>Absent</option>
+                                        <option value="leave" {% if attendance_map.get(worker.id ~ '_Sun')=='leave' %}selected{% endif %}>OtherSite</option>
+                                    </select>
 
-                            </td>
-                            <td>
-                                <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Wed','{{worker.id}}','{{worker.name}}')">
-                                    <option value="0">--</option>
-                                    <option value="1d" {% if attendance_map.get(worker.id ~ '_Wed')=='1d' %}selected{% endif %}>1d</option>
-                                    <option value="0.5d" {% if attendance_map.get(worker.id ~ '_Wed')=='0.5d' %}selected{% endif %}>0.5d</option>
-                                    <option value="1.5d" {% if attendance_map.get(worker.id ~ '_Wed')=='1.5d' %}selected{% endif %}>1.5d</option>
-                                    <option value="2d" {% if attendance_map.get(worker.id ~ '_Wed')=='2d' %}selected{% endif %}>2d</option>
-                                    <option value="2.5d" {% if attendance_map.get(worker.id ~ '_Wed')=='2.5d' %}selected{% endif %}>2.5d</option>
-                                    <option value="absent" {% if attendance_map.get(worker.id ~ '_Wed')=='absent' %}selected{% endif %}>Absent</option>
-                                    <option value="leave" {% if attendance_map.get(worker.id ~ '_Wed')=='leave' %}selected{% endif %}>OtherSite</option>
-                                </select>
-                            </td>
-                            <td>
-                                <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Thu','{{worker.id}}','{{worker.name}}')">
-                                    <option value="0">--</option>
-                                    <option value="1d" {% if attendance_map.get(worker.id ~ '_Thu')=='1d' %}selected{% endif %}>1d</option>
-                                    <option value="0.5d" {% if attendance_map.get(worker.id ~ '_Thu')=='0.5d' %}selected{% endif %}>0.5d</option>
-                                    <option value="1.5d" {% if attendance_map.get(worker.id ~ '_Thu')=='1.5d' %}selected{% endif %}>1.5d</option>
-                                    <option value="2d" {% if attendance_map.get(worker.id ~ '_Thu')=='2d' %}selected{% endif %}>2d</option>
-                                    <option value="2.5d" {% if attendance_map.get(worker.id ~ '_Thu')=='2.5d' %}selected{% endif %}>2.5d</option>
-                                    <option value="absent" {% if attendance_map.get(worker.id ~ '_Thu')=='absent' %}selected{% endif %}>Absent</option>
-                                    <option value="leave" {% if attendance_map.get(worker.id ~ '_Thu')=='leave' %}selected{% endif %}>OtherSite</option>
-                                </select>
-                            </td>
-                            <td>
-                                <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Fri','{{worker.id}}','{{worker.name}}')">
-                                    <option value="0">--</option>
-                                    <option value="1d" {% if attendance_map.get(worker.id ~ '_Fri')=='1d' %}selected{% endif %}>1d</option>
-                                    <option value="0.5d" {% if attendance_map.get(worker.id ~ '_Fri')=='0.5d' %}selected{% endif %}>0.5d</option>
-                                    <option value="1.5d" {% if attendance_map.get(worker.id ~ '_Fri')=='1.5d' %}selected{% endif %}>1.5d</option>
-                                    <option value="2d" {% if attendance_map.get(worker.id ~ '_Fri')=='2d' %}selected{% endif %}>2d</option>
-                                    <option value="2.5d" {% if attendance_map.get(worker.id ~ '_Fri')=='2.5d' %}selected{% endif %}>2.5d</option>
-                                    <option value="absent" {% if attendance_map.get(worker.id ~ '_Fri')=='absent' %}selected{% endif %}>Absent</option>
-                                    <option value="leave" {% if attendance_map.get(worker.id ~ '_Fri')=='leave' %}selected{% endif %}>OtherSite</option>
-                                </select>
-                            </td>
-                            <td>
-                                <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Sat','{{worker.id}}','{{worker.name}}')">
-                                    <option value="0">--</option>
-                                    <option value="1d" {% if attendance_map.get(worker.id ~ '_Sat')=='1d' %}selected{% endif %}>1d</option>
-                                    <option value="0.5d" {% if attendance_map.get(worker.id ~ '_Sat')=='0.5d' %}selected{% endif %}>0.5d</option>
-                                    <option value="1.5d" {% if attendance_map.get(worker.id ~ '_Sat')=='1.5d' %}selected{% endif %}>1.5d</option>
-                                    <option value="2d" {% if attendance_map.get(worker.id ~ '_Sat')=='2d' %}selected{% endif %}>2d</option>
-                                    <option value="2.5d" {% if attendance_map.get(worker.id ~ '_Sat')=='2.5d' %}selected{% endif %}>2.5d</option>
-                                    <option value="absent" {% if attendance_map.get(worker.id ~ '_Sat')=='absent' %}selected{% endif %}>Absent</option>
-                                    <option value="leave" {% if attendance_map.get(worker.id ~ '_Sat')=='leave' %}selected{% endif %}>OtherSite</option>
-                                </select>
-                            </td>
-                            <td>
-                                <select class="form-select attendance-select text-center" onchange="saveAttendance(this,'Sun','{{worker.id}}','{{worker.name}}')">
-                                    <option value="0">--</option>
-                                    <option value="1d" {% if attendance_map.get(worker.id ~ '_Sun')=='1d' %}selected{% endif %}>1d</option>
-                                    <option value="0.5d" {% if attendance_map.get(worker.id ~ '_Sun')=='0.5d' %}selected{% endif %}>0.5d</option>
-                                    <option value="1.5d" {% if attendance_map.get(worker.id ~ '_Sun')=='1.5d' %}selected{% endif %}>1.5d</option>
-                                    <option value="2d" {% if attendance_map.get(worker.id ~ '_Sun')=='2d' %}selected{% endif %}>2d</option>
-                                    <option value="2.5d" {% if attendance_map.get(worker.id ~ '_Sun')=='2.5d' %}selected{% endif %}>2.5d</option>
-                                    <option value="absent" {% if attendance_map.get(worker.id ~ '_Sun')=='absent' %}selected{% endif %}>Absent</option>
-                                    <option value="leave" {% if attendance_map.get(worker.id ~ '_Sun')=='leave' %}selected{% endif %}>OtherSite</option>
-                                </select>
+                                </td>
+                                <td class="total-days"  id="total-days-{{ worker.id }}">0</td>
+                                <td id="sal-total-{{ worker.id }}" style="font-weight:700;color:#000;">
+                                    {{ worker.total_amount }}
+                                </td>
+                                <td class="d-flex align-item-center gap-3">
+                                    <a href="/delete-worker/{{worker.id}}/{{project_name}}" class="btn btn-danger btn-sm" onclick="return confirm('Delete Worker?')"><i class="bi bi-trash"></i></a>
+                                    <button type="button" class="btn btn-sm btn-warning" onclick="openOTPopup('{{ worker.id }}', '{{ worker.name }}', '{{ project_name }}')">OT</button>
+                                    <button type="button" class="btn btn-sm btn-info" onclick="openOTDetails('{{ worker.id }}', '{{ worker.name }}')">OT Details</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
 
-                            </td>
-                            <td class="total-days"  id="total-days-{{ worker.id }}">0</td>
-                            <td id="sal-total-{{ worker.id }}" style="font-weight:700;color:#000;">
-                                {{ worker.total_amount }}
-                            </td>
-                            <td class="d-flex align-item-center gap-3">
-                                <a href="/delete-worker/{{worker.id}}/{{project_name}}" class="btn btn-danger btn-sm" onclick="return confirm('Delete Worker?')"><i class="bi bi-trash"></i></a>
-                                 <button type="button" class="btn btn-sm btn-warning" onclick="openOTPopup('{{ worker.id }}', '{{ worker.name }}', '{{ project_name }}')">OT</button>
-                                <button type="button" class="btn btn-sm btn-info" onclick="openOTDetails('{{ worker.id }}', '{{ worker.name }}')">OT Details</button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                </div>
 
             </div>
 
         </div>
 
-        </div>
 
-
-        <div class="modal fade"
-        id="workerModal"
-        tabindex="-1">
+        <div class="modal fade" id="workerModal" tabindex="-1">
 
         <div class="modal-dialog">
-
             <div class="modal-content">
                 <div class="modal-header">
-
-                <button class="btn btn-primary"  data-bs-toggle="mode" data-bs-target="#workerModal">
-                    + Add Workers
-                </button>
-
+                    <button class="btn btn-primary"  data-bs-toggle="mode" data-bs-target="#workerModal">
+                        + Add Workers
+                    </button>
                 </div>
-
                 <form method="POST" action="/add-worker">
 
                     <div class="modal-body">
-
                         <input type="hidden" name="project_name" value="{{ project_name }}">
-
                         <input type="text" name="worker_name" class="form-control" placeholder="Enter Worker Name" required>
+                    </div>
 
+                     <div class="m-3">
+                        <label class="form-label fw-semibold" style="font-size:13px;">Worker Type</label>
+                        <select name="worker_type" class="form-select" required>
+                            <option value="">-- Select Type --</option>
+                            <option value="Helper">Helper</option>
+                            <option value="Mason">Mason</option>
+                            <option value="Barbender">Barbender</option>
+                        </select>
                     </div>
 
                     <div class="modal-footer">
-
-                        <button
-                            type="submit"
-                            class="btn btn-primary">
-
-                            Save Worker
-
-                        </button>
-
+                        <button type="submit" class="btn btn-primary"> Save Worker</button>
                     </div>
 
                 </form>
@@ -626,8 +626,8 @@ function autoSaveSalary(workerId, projectName, newSalary) {
 <script>
 
 // office working hours — used to validate OT time selection
-const OFFICE_START = "09:00";
-const OFFICE_END   = "18:20";  // 6:20 PM in 24 hour format
+// const OFFICE_START = "09:00";
+// const OFFICE_END   = "18:20";  // 6:20 PM in 24 hour format
 
 
 // builds a dropdown with every 30 minute time slot for the whole day
@@ -693,12 +693,12 @@ function timeToMinutes(timeStr) {
 
 
 // checks if a given time falls inside office hours (9:00 AM to 6:20 PM)
-function isInsideOfficeHours(timeStr) {
-    const t     = timeToMinutes(timeStr);
-    const start = timeToMinutes(OFFICE_START);
-    const end   = timeToMinutes(OFFICE_END);
-    return t >= start && t <= end;
-}
+// function isInsideOfficeHours(timeStr) {
+//     const t     = timeToMinutes(timeStr);
+//     const start = timeToMinutes(OFFICE_START);
+//     const end   = timeToMinutes(OFFICE_END);
+//     return t >= start && t <= end;
+// }
 
 
 // called when site engineer clicks Save in the OT popup
@@ -710,11 +710,11 @@ function saveOvertime() {
 
     // rule: OT must be OUTSIDE office hours (9:00 AM - 6:20 PM)
     // if either start or end time falls inside office hours, block save
-    if (isInsideOfficeHours(startTime) || isInsideOfficeHours(endTime)) {
-        errorBox.textContent = "Please select time outside working hours (9:00 AM - 6:20 PM)";
-        errorBox.style.display = "block";
-        return;  // stop here — do not save
-    }
+    // if (isInsideOfficeHours(startTime) || isInsideOfficeHours(endTime)) {
+    //     errorBox.textContent = "Please select time outside working hours (9:00 AM - 6:20 PM)";
+    //     errorBox.style.display = "block";
+    //     return;  // stop here — do not save
+    // }
 
     // calculate total OT hours from start and end time
     let startMin = timeToMinutes(startTime);
