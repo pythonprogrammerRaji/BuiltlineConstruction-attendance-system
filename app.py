@@ -770,7 +770,7 @@ def do_attendance_reset():
 
             for worker in workers.data:
 
-                row = [worker["name"], worker.get("worker_type", "--")]
+                row = [worker["name"], worker.get("worker_type", "--"), worker.get("salary", "0")]
                 total_day = 0
 
                 for day in days:
@@ -790,6 +790,10 @@ def do_attendance_reset():
                     row.append(attendance_value)
 
                 row.append(f"{total_day} d")
+
+                salary       = float(worker.get("salary") or 0)
+                total_amount = salary * total_day
+                row.append(f"₹{total_amount:,.0f}")
 
 
                 # get OT for this worker
