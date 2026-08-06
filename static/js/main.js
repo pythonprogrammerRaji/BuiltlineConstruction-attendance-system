@@ -197,99 +197,304 @@ fetch("/save-attendance",{
 }
 
 
-document.addEventListener("DOMContentLoaded",function(){
-    const checkinBtn=document.getElementById("checkinBtn");
-    const checkoutBtn=document.getElementById("checkoutBtn");
-    const selfieInputGallery =document.getElementById("selfieInputGallery");
-    const attendancePreview=document.getElementById("attendancePreview");
-    const statusText=document.getElementById("statusText");
-    const workerName=document.getElementById("workerName").value;
-    const projectName=document.getElementById("projectName").value;
+// document.addEventListener("DOMContentLoaded",function(){
+//     const checkinBtn=document.getElementById("checkinBtn");
+//     const checkoutBtn=document.getElementById("checkoutBtn");
+//     const selfieInputGallery =document.getElementById("selfieInputGallery");
+//     const attendancePreview=document.getElementById("attendancePreview");
+//     const statusText=document.getElementById("statusText");
+//     const workerName=document.getElementById("workerName").value;
+//     const projectName=document.getElementById("projectName").value;
 
-    let attendanceType="";
+//     let attendanceType="";
 
-    // navigator.geolocation.getCurrentPosition(
+//     // navigator.geolocation.getCurrentPosition(
 
-    // function(position){
+//     // function(position){
 
-    // fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`)
+//     // fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`)
 
-    // .then(response=>response.json())
+//     // .then(response=>response.json())
 
-    // .then(data=>{
+//     // .then(data=>{
 
-    // locationName=
-    // data.address.suburb||
-    // data.address.city||
-    // data.address.town||
-    // data.address.village||
-    // "Unknown Location";
+//     // locationName=
+//     // data.address.suburb||
+//     // data.address.city||
+//     // data.address.town||
+//     // data.address.village||
+//     // "Unknown Location";
 
-    // });
+//     // });
 
-    // },
+//     // },
 
-    // function(){
+//     // function(){
 
-    // locationName="Location not allowed";
+//     // locationName="Location not allowed";
 
-    // }
+//     // }
 
-    // );
+//     // );
 
-    checkinBtn.onclick=function(){
-        attendanceType="Check In";
-        selfieInputGallery.click();
-    };
+//     checkinBtn.onclick=function(){
+//         attendanceType="Check In";
+//         selfieInputGallery.click();
+//     };
 
-    checkoutBtn.onclick=function(){
-        attendanceType="Check Out";
-        selfieInputGallery.click();
-    };
+//     checkoutBtn.onclick=function(){
+//         attendanceType="Check Out";
+//         selfieInputGallery.click();
+//     };
 
-    selfieInputGallery.onchange=function(){
-        const file=this.files[0];
+//     selfieInputGallery.onchange=function(){
+//         const file=this.files[0];
 
-        if(!file){
-        return;
-        }
+//         if(!file){
+//         return;
+//         }
 
-    const imageUrl=URL.createObjectURL(file);
-    const currentDate=new Date().toLocaleDateString();
+//     const imageUrl=URL.createObjectURL(file);
+//     const currentDate=new Date().toLocaleDateString();
     
-    const formData=new FormData()
-    formData.append("image",file);
-    formData.append("type",attendanceType);
-    formData.append("date",currentDate);
-    formData.append("worker_name",workerName);
-    formData.append("project_name",projectName);
+//     const formData=new FormData()
+//     formData.append("image",file);
+//     formData.append("type",attendanceType);
+//     formData.append("date",currentDate);
+//     formData.append("worker_name",workerName);
+//     formData.append("project_name",projectName);
 
 
-    const card=`
-        <div class="card p-3 mb-3">
-            <img src="${imageUrl}" style="width:200px;border-radius:10px;" class="mb-2">
-            <h5>${attendanceType}</h5>
-            <p><strong>Date:</strong>${currentDate}</p>
-        </div>
+//     const card=`
+//         <div class="card p-3 mb-3">
+//             <img src="${imageUrl}" style="width:200px;border-radius:10px;" class="mb-2">
+//             <h5>${attendanceType}</h5>
+//             <p><strong>Date:</strong>${currentDate}</p>
+//         </div>
 
-    `;
+//     `;
 
-    attendancePreview.innerHTML=card;
+//     attendancePreview.innerHTML=card;
 
-    fetch("/save-attendance-checkin",{
-        method:"POST",
-        body:formData
-    })
-    .then(response=>response.json())
-    .then(data=>{
-        statusText.innerText=attendanceType+" Successful";
-    });
+//     fetch("/save-attendance-checkin",{
+//         method:"POST",
+//         body:formData
+//     })
+//     .then(response=>response.json())
+//     .then(data=>{
+//         statusText.innerText=attendanceType+" Successful";
+//     });
 
+//     };
+
+// });
+
+
+// selfieInputGallery.onchange = function(){
+//     const file = this.files[0];
+
+//     if(!file){ return; }
+
+//     const imageUrl = URL.createObjectURL(file);
+
+//     // consistent date format — same on every phone
+//     const now         = new Date();
+//     const currentDate = now.getFullYear() + "-" +
+//         String(now.getMonth() + 1).padStart(2, "0") + "-" +
+//         String(now.getDate()).padStart(2, "0");
+
+//     const formData = new FormData();
+//     formData.append("image",        file);
+//     formData.append("type",         attendanceType);
+//     formData.append("date",         currentDate);
+//     formData.append("worker_name",  workerName);
+//     formData.append("project_name", projectName);
+
+//     // show preview with uploading status
+//     attendancePreview.innerHTML = `
+//         <div class="card p-3 mb-3">
+//             <img src="${imageUrl}" style="width:200px;border-radius:10px;" class="mb-2">
+//             <h5>${attendanceType}</h5>
+//             <p><strong>Date:</strong> ${currentDate}</p>
+//             <p id="upload-status" style="color:orange;font-weight:600;">
+//                 ⏳ Uploading... please wait
+//             </p>
+//         </div>
+//     `;
+
+//     // try upload — retry up to 3 times if fails
+//     uploadWithRetry(formData, 3);
+// };
+
+// tries upload — if fails waits 2 seconds and tries again
+// stops after 3 attempts and shows error
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    const checkinBtn         = document.getElementById("checkinBtn");
+    const checkoutBtn        = document.getElementById("checkoutBtn");
+    const selfieInputGallery = document.getElementById("selfieInputGallery");
+    const attendancePreview  = document.getElementById("attendancePreview");
+    const statusText         = document.getElementById("statusText");
+    const workerName         = document.getElementById("workerName").value;
+    const projectName        = document.getElementById("projectName").value;
+
+    let attendanceType = "";
+
+    // check all elements exist before adding listeners
+    if (!checkinBtn || !checkoutBtn || !selfieInputGallery) {
+        console.error("Checkin elements not found");
+        return;
+    }
+
+    checkinBtn.onclick = function(){
+        attendanceType = "Check In";
+        selfieInputGallery.click();
+    };
+
+    checkoutBtn.onclick = function(){
+        attendanceType = "Check Out";
+        selfieInputGallery.click();
+    };
+
+    selfieInputGallery.onchange = function(){
+
+        const file = this.files[0];
+        if (!file) { return; }
+
+        const imageUrl = URL.createObjectURL(file);
+
+        // consistent date on every phone
+        const now         = new Date();
+        const currentDate = now.getFullYear() + "-" +
+            String(now.getMonth() + 1).padStart(2, "0") + "-" +
+            String(now.getDate()).padStart(2, "0");
+
+        const formData = new FormData();
+        formData.append("image",        file);
+        formData.append("type",         attendanceType);
+        formData.append("date",         currentDate);
+        formData.append("worker_name",  workerName);
+        formData.append("project_name", projectName);
+
+        // show preview with uploading status
+        attendancePreview.innerHTML = `
+            <div class="card p-3 mb-3">
+                <img src="${imageUrl}"
+                     style="width:200px;border-radius:10px;"
+                     class="mb-2">
+                <h5>${attendanceType}</h5>
+                <p><strong>Date:</strong> ${currentDate}</p>
+                <p id="upload-status"
+                   style="color:orange;font-weight:600;">
+                    ⏳ Uploading... please wait
+                </p>
+            </div>
+        `;
+
+        // start upload with 3 retries
+        doUpload(formData, attendanceType, statusText, 3);
     };
 
 });
 
+// defined outside DOMContentLoaded so it is always reachable
+function doUpload(formData, attendanceType, statusText, attemptsLeft) {
 
+    fetch("/save-attendance-checkin", {
+        method: "POST",
+        body:   formData
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error("Server error " + response.status);
+        }
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            statusText.innerText = attendanceType + " Successful ✅";
+            const status = document.getElementById("upload-status");
+            if (status) {
+                status.textContent = "✅ Saved successfully";
+                status.style.color = "green";
+            }
+        } else {
+            throw new Error(data.error || "Upload failed");
+        }
+    })
+    .catch(function(error) {
+        console.error("Upload error:", error);
+
+        if (attemptsLeft > 1) {
+            const status = document.getElementById("upload-status");
+            if (status) {
+                status.textContent = "⚠️ Retrying... (" + (attemptsLeft - 1) + " attempts left)";
+                status.style.color = "orange";
+            }
+            // wait 2 seconds then retry
+            setTimeout(function() {
+                doUpload(formData, attendanceType, statusText, attemptsLeft - 1);
+            }, 2000);
+
+        } else {
+            const status = document.getElementById("upload-status");
+            if (status) {
+                status.textContent = "❌ Upload failed. Check internet and try again.";
+                status.style.color = "red";
+            }
+            alert("Upload failed after 3 attempts. Please check internet and try again.");
+        }
+    });
+}
+
+
+function uploadWithRetry(formData, attemptsLeft) {
+
+    fetch("/save-attendance-checkin", {
+        method: "POST",
+        body:   formData
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("Server error " + response.status);
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // update status to success
+            statusText.innerText = attendanceType + " Successful ✅";
+            const status = document.getElementById("upload-status");
+            if (status) {
+                status.textContent = "✅ Saved successfully";
+                status.style.color = "green";
+            }
+        } else {
+            throw new Error(data.error || "Upload failed");
+        }
+    })
+    .catch(error => {
+        console.error("Upload failed:", error);
+
+        if (attemptsLeft > 1) {
+            // show retry message and try again after 2 seconds
+            const status = document.getElementById("upload-status");
+            if (status) {
+                status.textContent = "⚠️ Retrying... (" + (attemptsLeft - 1) + " left)";
+                status.style.color = "orange";
+            }
+            setTimeout(() => uploadWithRetry(formData, attemptsLeft - 1), 2000);
+
+        } else {
+            // all 3 attempts failed
+            const status = document.getElementById("upload-status");
+            if (status) {
+                status.textContent = "❌ Upload failed. Check internet and try again.";
+                status.style.color = "red";
+            }
+            alert("Upload failed after 3 attempts. Please check internet and try again.");
+        }
+    });
+}
 
 const taskCheckboxes = document.querySelectorAll(".taskCheckbox");
 
