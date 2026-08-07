@@ -596,18 +596,6 @@ def save_attendance_checkin():
         # read image bytes
         image_bytes = image.read()
 
-        # fix 1 — compress image if too large (over 1MB)
-        # large images cause timeout on slow mobile connections
-        if len(image_bytes) > 1 * 1024 * 1024:
-            from PIL import Image
-            import io as _io
-            img = Image.open(_io.BytesIO(image_bytes))
-            # resize to max 800px width keeping aspect ratio
-            img.thumbnail((800, 800))
-            buffer = _io.BytesIO()
-            img.save(buffer, format="JPEG", quality=70)
-            image_bytes = buffer.getvalue()
-
         # fix 2 — always unique filename using timestamp + worker name
         # prevents duplicate filename rejection from Supabase
         safe_name = worker_name.replace(" ", "_") if worker_name else "unknown"
