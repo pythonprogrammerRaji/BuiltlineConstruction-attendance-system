@@ -3,6 +3,8 @@ from datetime import datetime, timedelta, date
 from openpyxl import Workbook
 import time
 import os
+import cloudinary
+import cloudinary.uploader
 
 from config import (
     supabase,
@@ -163,8 +165,8 @@ def admin_dashboard():
 
     # get this month tasks only
     # tasks stay for one month then go to history
-    one_month_ago = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
-    tasks = supabase.table("task").select("*").eq("is_deleted", False).gte("created_at", one_month_ago).execute()
+    # one_month_ago = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+    tasks = supabase.table("task").select("*").eq("is_deleted", False).execute()
 
 
     return render_template(
@@ -307,20 +309,6 @@ def engineer_page():
         ongoing_count = my_ongoing
         completed_count = my_completed
         engineer_count = 1
-    
-
-    # # admin sees all projects
-    # if role == "admin":
-    #     projects = all_projects.data
-
-    # # engineer sees only their projects
-    # else:
-    #     my_projects = supabase.table("project_assignments")\
-    #         .select("*")\
-    #         .eq("assigned_engineer", worker_name)\
-    #         .eq("is_deleted", False)\
-    #         .execute()
-    #     projects = my_projects.data
 
     return render_template(
         "engineer_home.html",
@@ -594,26 +582,40 @@ def save_attendance_checkin():
         date = datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d")
 
         # read image bytes
-        image_bytes = image.read()
+        # image_bytes = image.read()
 
-        # fix 2 — always unique filename using timestamp + worker name
-        # prevents duplicate filename rejection from Supabase
-        safe_name = worker_name.replace(" ", "_") if worker_name else "unknown"
-        filename  = f"{date}_{safe_name}_{attendance_type.replace(' ', '_')}_{int(time.time())}.jpg"
+        # # fix 2 — always unique filename using timestamp + worker name
+        # # prevents duplicate filename rejection from Supabase
+        # safe_name = worker_name.replace(" ", "_") if worker_name else "unknown"
+        # filename  = f"{date}_{safe_name}_{attendance_type.replace(' ', '_')}_{int(time.time())}.jpg"
 
-        # fix 3 — upsert=true means even if same file exists, overwrite it
-        supabase.storage.from_("attendance-images").upload(
-            path         = filename,
-            file         = image_bytes,
-            file_options = {
-                "content-type": "image/jpeg",
-                "upsert":        "true"
-            }
+        # # fix 3 — upsert=true means even if same file exists, overwrite it
+        # supabase.storage.from_("attendance-images").upload(
+        #     path         = filename,
+        #     file         = image_bytes,
+        #     file_options = {
+        #         "content-type": "image/jpeg",
+        #         "upsert":        "true"
+        #     }
+        # )
+
+        # image_url = supabase.storage.from_("attendance-images").get_public_url(filename)
+
+
+        cloudinary.config(
+            cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME"),
+            api_key    = os.getenv("CLOUDINARY_API_KEY"),
+            api_secret = os.getenv("CLOUDINARY_API_SECRET")
         )
 
-        image_url = supabase.storage.from_("attendance-images")\
-            .get_public_url(filename)
+        image_bytes = image.read()
 
+        upload_result = cloudinary.uploader.upload(
+            image_bytes,
+            folder = "attendance-checkins"
+        )
+
+        image_url = upload_result["secure_url"]
         supabase.table("attendance_checkin").insert({
             "worker_name":  worker_name,
             "project_name": project_name,
@@ -692,12 +694,14 @@ def update_task():
     if is_completed:
     # only save notification when task is completed
     # not for pending
-        supabase.table("notifications").insert({
+        result =  supabase.table("notifications").insert({
         "message":  f"{engineer} completed '{task_name}' in {project_name}",
         "type":     "task_completed",
         "for_role": "admin",
         "is_read":  False
     }).execute()
+
+        print("ADMIN NOTIFICATION INSERT RESULT:", result.data)
 
     else:
         # engineer unticked a task
@@ -720,7 +724,7 @@ def update_task():
 @app.route("/delete-engineer-task/<engineer>/<project_name>")
 def delete_engineer_task(engineer,project_name):
 
-    supabase.table("task").update({"is_deleted": True}).eq("assigned_engineer", engineer).eq("project_name", project_name).execute()
+    supabase.table("task").delete().eq("assigned_engineer", engineer).eq("project_name", project_name).execute()
 
     return redirect("/admin-dashboard")
 
@@ -742,7 +746,7 @@ def restart_attendance():
     ist   = pytz.timezone("Asia/Kolkata")
     today = datetime.now(ist).strftime("%A")
 
-    if today != "Monday":
+    if today != "Thursday":
         return """
         <script>
         alert('Attendance reset only available on Monday');
@@ -944,7 +948,9 @@ def do_attendance_reset():
         print("RESET COMPLETE")
 
     except Exception as e:
+        import traceback
         print("RESET ERROR:", str(e))
+        traceback.print_exc()
 
 
 #delete the history stored attendance card
@@ -1015,11 +1021,12 @@ def delete_checkin_history():
             image_url = record.data[0].get("image_url", "")
 
             # delete image from Supabase Storage
-            if image_url and "supabase" in image_url:
+            # if image_url and "supabase" in image_url:
+            if "cloudinary" in image_url:
                 try:
-                    filename = image_url.split("/")[-1]
-                    supabase.storage.from_("attendance-images")\
-                        .remove([filename])
+                    public_id = "attendance-checkin/" + image_url.split("/")[-1].split(".")[0] 
+                    cloudinary.uploader.destroy(public_id)
+            
                 except Exception as e:
                     print("STORAGE DELETE ERROR:", str(e))
 
@@ -1110,7 +1117,17 @@ def profile():
         .eq("full_name", worker_name)\
         .execute()
 
+    check = supabase.table("users")\
+    .select("full_name,profile_photo")\
+    .eq("full_name", worker_name)\
+    .execute()
+
+    print("AFTER UPLOAD DB:", check.data)
+
     user_data = user.data[0] if user.data else {}
+
+    print("PROFILE USER DATA:", user_data)
+    print("PROFILE PHOTO FROM DB:", user_data.get("profile_photo"))
 
     # get their projects
     my_projects = supabase.table("project_assignments")\
@@ -1210,8 +1227,12 @@ def upload_profile_photo():
         }
     )
 
-    photo_url = supabase.storage.from_("attendance-images")\
-        .get_public_url(f"profiles/{filename}")
+    # photo_url = supabase.storage.from_("attendance-images")\
+    #     .get_public_url(f"profiles/{filename}")
+
+    photo_url = f"https://xtnxzhtzopxrhxmichsq.supabase.co/storage/v1/object/public/attendance-images/profiles/{filename}"
+
+    print("PROFILE PHOTO URL:", photo_url)
 
     supabase.table("users")\
         .update({"profile_photo": photo_url})\
