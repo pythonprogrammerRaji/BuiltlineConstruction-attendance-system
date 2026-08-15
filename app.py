@@ -447,7 +447,7 @@ def save_attendance():
 def delete_worker(worker_id,project_name):
 
     supabase.table("attendance").delete().eq("worker_id",worker_id).execute()
-    supabase.table("workers").update({"is_deleted": True}).eq("id", worker_id).execute()
+    supabase.table("workers").delete().eq("id", worker_id).execute()
     return redirect(f"/project/{project_name}")
 
 # Workers OT
