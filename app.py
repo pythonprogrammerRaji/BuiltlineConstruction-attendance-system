@@ -1078,10 +1078,18 @@ def update_salary():
     worker_id = request.form.get("worker_id")
     salary    = request.form.get("salary")
 
-    supabase.table("workers")\
+    result=supabase.table("workers")\
         .update({"salary": salary})\
         .eq("id", worker_id)\
         .execute()
+
+    check = supabase.table("workers")\
+        .select("id, name, salary")\
+        .eq("id", worker_id)\
+        .execute()
+
+    print("SALARY UPDATE:", worker_id, salary)
+    print("UPDATED ROW:", check.data)
 
     return jsonify({"success": True})
 
