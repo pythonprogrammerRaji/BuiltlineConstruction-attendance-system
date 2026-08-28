@@ -179,24 +179,7 @@
                             {% for worker in workers %}
                             <tr>
                                 <td>
-                                    <!-- dropdown to pick worker type, auto-saves on change -->
-                                    <!-- <form method="POST" action="/update-worker-type" id="type-form-{{ worker.id }}">
-
-                                        <input type="hidden" name="worker_id"    value="{{ worker.id }}" class="form-control">
-                                        <input type="hidden" name="project_name" value="{{ project_name }}" class="form-control">
-
-                                        <select name="worker_type"
-                                                class="form-select form-select-sm"
-                                                style="min-width:100px;"
-                                                onchange="document.getElementById('type-form-{{ worker.id }}').submit()">
-                                        <option value="Helper"  {% if worker.worker_type == "Helper"  %}selected{% endif %}>Helper</option>
-                                        <option value="Meshan"  {% if worker.worker_type == "Meshan"  %}selected{% endif %}>Meshan</option>
-                                        <option value="Shuttering" {% if worker.worker_type == "Shuttering" %}selected{% endif %}>Shuttering</option>
-                                        <option value="Barbender" {% if worker.worker_type == "Barbender" %}selected{% endif %}>Barbender</option>
-                                        </select>
-                                    </form> -->
-
-                                     <span style="cursor:pointer;font-size:13px;font-weight:500;color:#1a1a1a;"
+                                    <span style="cursor:pointer;font-size:13px;font-weight:500;color:#1a1a1a;"
                                             onclick="openTypePopup('{{ worker.id }}', '{{ worker.worker_type }}')"
                                             id="type-label-{{ worker.id }}">
                                             {{ worker.worker_type or '-- Select --' }}

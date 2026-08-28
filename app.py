@@ -335,7 +335,10 @@ def project_page(project_name):
     project=supabase.table("project_assignments").select("*").eq("project_name",project_name).execute() 
     tasks = supabase.table("task").select("*").eq("project_name", project_name).eq("is_deleted", False).execute()
     workers = supabase.table("workers").select("*").eq("project_name", project_name).eq("is_deleted", False).execute()
-    
+
+    for worker in workers.data:
+        print("WORKER:", worker["name"], "ID:", worker["id"])
+
     attendance_map={}
 
     for item in attendance.data:
@@ -343,6 +346,7 @@ def project_page(project_name):
         attendance_map[key] = item["value"]
 
     site_engineer=project.data[0]["assigned_engineer"]
+   
 
     return render_template(
         "project_page.html",
@@ -423,12 +427,16 @@ def save_attendance():
 
     # Update if already exists
     if old.data:
-        supabase.table("attendance") \
-            .update({"value": value}) \
+        print("UPDATING - old value:", old.data[0]["value"], "new value:", value)
+        result = supabase.table("attendance") \
+            .update({"value": value, "worker_name": worker_name}) \
             .eq("worker_id", worker_id) \
             .eq("project_name", project_name) \
             .eq("day_name", day_name) \
             .execute()
+        print("UPDATE RESULT:", result.data)
+        print("DB ROW:", old.data[0])
+        print("SENDING - worker_id:", worker_id, "project:", project_name, "day:", day_name)
 
     # Insert new attendance
     else:
@@ -746,7 +754,7 @@ def restart_attendance():
     ist   = pytz.timezone("Asia/Kolkata")
     today = datetime.now(ist).strftime("%A")
 
-    if today != "Thursday":
+    if today != "Monday":
         return """
         <script>
         alert('Attendance reset only available on Monday');
@@ -977,17 +985,23 @@ def delete_history():
             file_url = record.data[0].get("file_name", "")
 
             # delete the excel file from Supabase Storage too
-            # so it does not waste storage space
-            if "supabase" in file_url:
+            if file_url:
                 try:
-                    # extract just the file path from the full URL
-                    storage_path = file_url.split("/object/public/attendance-images/")[-1]
-                    supabase.storage.from_("attendance-images")\
-                        .remove([storage_path])
-                except Exception as e:
-                    print("DELETE ERROR:", str(e))
-                    return redirect("/history")
+                    storage_path = file_url.split("/object/public/attendance-images/", 1)[-1]
+                    storage_path = storage_path.split("?", 1)[0]
 
+                    print("DELETING STORAGE FILE:", repr(storage_path))
+
+                    result = supabase.storage.from_("attendance-images").remove([storage_path])
+
+                    print("STORAGE DELETE RESULT:", result)
+
+                except Exception as e:
+                    print("DELETE STORAGE ERROR:", str(e))        
+
+            
+
+            
         # delete the record from database
         supabase.table("attendance_history")\
             .delete()\
