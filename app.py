@@ -1011,9 +1011,6 @@ def delete_history():
     flash("Selected records deleted.", "success")
     return redirect("/history")
 
-
-
-
 @app.route("/delete-checkin-history", methods=["POST"])
 def delete_checkin_history():
 
