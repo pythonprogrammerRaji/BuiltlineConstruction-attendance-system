@@ -754,7 +754,7 @@ def restart_attendance():
     ist   = pytz.timezone("Asia/Kolkata")
     today = datetime.now(ist).strftime("%A")
 
-    if today != "Monday":
+    if today != "Tuesday":
         return """
         <script>
         alert('Attendance reset only available on Monday');
@@ -886,30 +886,57 @@ def do_attendance_reset():
 
             storage_path = f"history/{project_name}_{week_name}.xlsx"
 
-            supabase.storage.from_("attendance-images").upload(
-                path         = storage_path,
-                file         = excel_buffer.getvalue(),
-                file_options = {
+            # supabase.storage.from_("attendance-images").upload(
+            #     path         = storage_path,
+            #     file         = excel_buffer.getvalue(),
+            #     file_options = {
+            #         "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            #         "upsert":        "true"
+            #     }
+            # )
+
+            # excel_url = supabase.storage.from_("attendance-images")\
+            #     .get_public_url(storage_path)
+
+            # supabase.table("attendance_history").insert({
+            #     "project_name":      project_name,
+            #     "assigned_engineer": engineer,
+            #     "week_name":         week_name,
+            #     "file_name":         excel_url
+            # }).execute()
+
+
+     # only save to history if upload actually succeeded
+            upload_result = supabase.storage.from_("attendance-images").upload(
+                path=storage_path,
+                file=excel_buffer.getvalue(),
+                file_options={
                     "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    "upsert":        "true"
+                    "upsert": "true"
                 }
             )
+    
+                # verify upload worked before saving URL
+            if upload_result:
+                excel_url = supabase.storage.from_("attendance-images").get_public_url(storage_path)
+                supabase.table("attendance_history").insert({
+                    "project_name":      project_name,
+                    "assigned_engineer": engineer,
+                    "week_name":         week_name,
+                    "file_name":         excel_url
+                }).execute()
 
-            excel_url = supabase.storage.from_("attendance-images")\
-                .get_public_url(storage_path)
+                supabase.table("attendance").delete().eq("project_name", project_name).execute()
+            else:
+                print("UPLOAD FAILED - attendance kept for:", project_name)
 
-            supabase.table("attendance_history").insert({
-                "project_name":      project_name,
-                "assigned_engineer": engineer,
-                "week_name":         week_name,
-                "file_name":         excel_url
-            }).execute()
+          
 
-        # reset attendance table for new week
-        supabase.table("attendance")\
-            .delete()\
-            .not_.is_("project_name", "null")\
-            .execute()
+        # # reset attendance table for new week
+        # supabase.table("attendance")\
+        #     .delete()\
+        #     .not_.is_("project_name", "null")\
+        #     .execute()
 
         # move old tasks to history
         monday    = today_dt - timedelta(days=today_dt.weekday())
