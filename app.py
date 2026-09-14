@@ -754,7 +754,7 @@ def restart_attendance():
     ist   = pytz.timezone("Asia/Kolkata")
     today = datetime.now(ist).strftime("%A")
 
-    if today != "Tuesday":
+    if today != "Monday":
         return """
         <script>
         alert('Attendance reset only available on Monday');
