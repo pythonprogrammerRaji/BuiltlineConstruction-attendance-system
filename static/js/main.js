@@ -420,7 +420,12 @@ function doUpload(formData, attendanceType, statusText, attemptsLeft) {
                 status.style.color = "green";
             }
         } else {
-            throw new Error(data.error || "Upload failed");
+            const status = document.getElementById("upload-status");
+            if (status) {
+                status.textContent = "❌ " + (data.error || "Upload failed");
+                status.style.color = "red";
+            }
+            alert(data.error || "Upload failed");
         }
     })
     .catch(function(error) {

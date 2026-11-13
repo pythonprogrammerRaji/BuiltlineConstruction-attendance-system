@@ -589,26 +589,16 @@ def save_attendance_checkin():
         # always use server date — never trust phone date
         date = datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d")
 
-        # read image bytes
-        # image_bytes = image.read()
+        # current time in India (server decides, not the phone)
+        now_ist = datetime.now(pytz.timezone("Asia/Kolkata"))
 
-        # # fix 2 — always unique filename using timestamp + worker name
-        # # prevents duplicate filename rejection from Supabase
-        # safe_name = worker_name.replace(" ", "_") if worker_name else "unknown"
-        # filename  = f"{date}_{safe_name}_{attendance_type.replace(' ', '_')}_{int(time.time())}.jpg"
+        # check-in closes at 10:00 AM
+        if attendance_type == "Check In" and now_ist.hour >= 10:
+            return jsonify({"success": False, "error": "Check-in time is over. Allowed only before 10:00 AM"})
 
-        # # fix 3 — upsert=true means even if same file exists, overwrite it
-        # supabase.storage.from_("attendance-images").upload(
-        #     path         = filename,
-        #     file         = image_bytes,
-        #     file_options = {
-        #         "content-type": "image/jpeg",
-        #         "upsert":        "true"
-        #     }
-        # )
-
-        # image_url = supabase.storage.from_("attendance-images").get_public_url(filename)
-
+        # check-out closes at 7:00 PM
+        if attendance_type == "Check Out" and now_ist.hour >= 19:
+            return jsonify({"success": False, "error": "Check-out time is over. Allowed only until 7:00 PM"})
 
         cloudinary.config(
             cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME"),
@@ -879,6 +869,12 @@ def do_attendance_reset():
 
                 ws.append(row)
 
+                # delete OT for this worker after saving to Excel
+                supabase.table("overtime")\
+                    .delete()\
+                    .eq("worker_id", worker["id"])\
+                    .execute()
+
             # save Excel to memory and upload to Supabase Storage
             excel_buffer = io.BytesIO()
             wb.save(excel_buffer)
@@ -930,13 +926,6 @@ def do_attendance_reset():
             else:
                 print("UPLOAD FAILED - attendance kept for:", project_name)
 
-          
-
-        # # reset attendance table for new week
-        # supabase.table("attendance")\
-        #     .delete()\
-        #     .not_.is_("project_name", "null")\
-        #     .execute()
 
         # move old tasks to history
         monday    = today_dt - timedelta(days=today_dt.weekday())
@@ -1026,9 +1015,6 @@ def delete_history():
                 except Exception as e:
                     print("DELETE STORAGE ERROR:", str(e))        
 
-            
-
-            
         # delete the record from database
         supabase.table("attendance_history")\
             .delete()\
